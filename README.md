@@ -7,6 +7,11 @@ Nee, deine Mudda!
 To install the `pattern` library used by this bot you probably have to 
 install `python-mysqlclient` as a system package manually.
 
+# Attributions
+
+Thx to @njamster for coming up with the idea and first working version
+of this bot.
+
 # Contributing
 
 GitHub is for social coding: if you want to write code, I encourage contributions through pull requests from forks
