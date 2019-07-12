@@ -9,6 +9,7 @@ from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 from deinemudda.config import AppConfig
 # dictionary used for antispam-protection, if activated
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE
+from deinemudda.persistence import Persistence
 
 spamtracker = {}
 
@@ -24,8 +25,9 @@ known_names = set([])
 
 class DeineMuddaBot:
 
-    def __init__(self, config: AppConfig):
+    def __init__(self, config: AppConfig, persistence: Persistence):
         self._config = config
+        self._persistence = persistence
 
         self._updater = Updater(token=self._config.TELEGRAM_BOT_TOKEN.value, use_context=True)
         self._updater.dispatcher.add_handler(
@@ -260,10 +262,3 @@ class DeineMuddaBot:
                 settings.update(new_elem)
             else:
                 bot.send_message(update.message.chat_id, text='set_chance <0-100>')
-
-
-if __name__ == '__main__':
-    config = AppConfig()
-
-    bot = DeineMuddaBot(config)
-    bot.start()

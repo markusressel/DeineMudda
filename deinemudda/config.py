@@ -1,7 +1,8 @@
 from container_app_conf import Config
 from container_app_conf.entry.string import StringConfigEntry
 
-from deinemudda.const import CONFIG_NODE_ROOT, CONFIG_NODE_TELEGRAM
+from deinemudda.const import CONFIG_NODE_ROOT, CONFIG_NODE_TELEGRAM, DEFAULT_SQL_PERSISTENCE_URL, \
+    CONFIG_NODE_PERSISTENCE
 
 
 class AppConfig(Config):
@@ -16,3 +17,11 @@ class AppConfig(Config):
             CONFIG_NODE_TELEGRAM,
             "bot_token"
         ])
+
+    SQL_PERSISTENCE_URL = StringConfigEntry(
+        yaml_path=[
+            CONFIG_NODE_ROOT,
+            CONFIG_NODE_PERSISTENCE,
+            "url"
+        ],
+        default=DEFAULT_SQL_PERSISTENCE_URL)

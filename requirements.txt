@@ -2,3 +2,5 @@ container-app-conf
 python-telegram-bot==12.0.0b1
 pattern
 emoji
+sqlalchemy
+alembic

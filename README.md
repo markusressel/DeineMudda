@@ -4,8 +4,17 @@ Nee, deine Mudda!
 
 # Developer docs
 
+## Setup
+
 To install the `pattern` library used by this bot you probably have to 
 install `python-mysqlclient` as a system package manually.
+
+## Debugging and execution
+
+Make sure to use the project base dir as the working directory and run: 
+```
+python3 ./deinemudda/main.py
+```
 
 # Attributions
 
