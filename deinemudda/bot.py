@@ -9,6 +9,7 @@ from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE
 from deinemudda.persistence import Persistence
+from deinemudda.response import ResponseManager
 from deinemudda.util import send_message
 
 # dictionary used for antispam-protection, if activated
@@ -29,6 +30,7 @@ class DeineMuddaBot:
     def __init__(self, config: AppConfig, persistence: Persistence):
         self._config = config
         self._persistence = persistence
+        self._response_manager = ResponseManager(self._persistence)
 
         # self._updater = Updater(token=self._config.TELEGRAM_BOT_TOKEN.value, use_context=True)
         self._updater = Updater(token=self._config.TELEGRAM_BOT_TOKEN.value)
@@ -91,34 +93,16 @@ class DeineMuddaBot:
         # pprint()
         parsed = parse(update.message.text, relations=True, lemmata=True)
 
-        # remove duplicate whitespaces from the message
-        input = re.sub(' +', ' ', update.message.text)
-        # we will only parse the message in lower case
-        input = input.lower()
-        # remove all characters from the message except the given ones
-        input = re.sub('[^a-z0-9| ?]+', '', input)
+        response_message = self._response_manager.process_message(name, update.message.text)
+        if response_message:
+            self._shout(bot, update.message, response_message)
+            return
 
+        # TODO: refactor those to rules
+        input = update.message.text
         # reflect counter intelligence
         hit = re.search(r"^dei(ne)? (mudda|mutter|mama)", input)
         if hit: return self._shout(bot, update.message, 'nee, ' + hit.group(0))
-
-        # easter egg #1: spongebob
-        if re.search(r"^wer wohnt in ner ananas ganz tief im meer?", input):
-            return self._shout(bot, update.message, 'spongebob schwammkopf')
-        # easter egg #2: ricola / me
-        elif re.search(r"^wer (hat es|hats) erfunden?", input):
-            if randint(0, 3) == 3:
-                return self._shout(bot, update.message, 'benjamin oesterle')
-            else:
-                return self._shout(bot, update.message, 'ricola')
-        # easter egg #3: ghostbusters
-        elif re.search(r"^who y(ou|a) gonna call\?", input):
-            return self._shout(bot, update.message, 'ghostbusters')
-
-        # german/english trigger for why questions
-        if re.search(r"(^| )(warum|wieso|weshalb|weswegen|why)(| (.)+)\?", input):
-            if randint(0, 100) <= trigger_chance:
-                return self._shout(bot, update.message, 'sex')
 
         # adjective counter intelligence
         for match in search('ADJP', parsetree(update.message.text, relations=True)):
@@ -130,19 +114,6 @@ class DeineMuddaBot:
                     return self._shout(bot, update.message, list(known_names)[user_id] + 's mudda is\' ' + word)
                 else:
                     return self._shout(bot, update.message, 'deine mudda is\' ' + word)
-
-        # german trigger for who questions
-        if re.search(r"(^| )(irgend)?(wer|jemand)(| (.)+)\?", input):
-            if randint(0, 100) <= trigger_chance:
-                if randint(0, 3) == 3:
-                    user_id = randint(0, len(known_names) - 1)
-                    return self._shout(bot, update.message, list(known_names)[user_id] + 's mudda')
-                else:
-                    return self._shout(bot, update.message, 'deine mudda')
-        # english trigger for who questions
-        elif re.search(r"who(| (.)+)\?", input):
-            if randint(0, 100) <= trigger_chance:
-                self._shout(bot, update.message, 'your momma')
 
     def _antispam(self, bot, update, n=30):
         chat_id = update.message.chat_id
