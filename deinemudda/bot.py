@@ -1,7 +1,8 @@
 import datetime
+import logging
 from random import randint
 
-from pattern.text.de import parsetree, parse
+from pattern.text.de import parsetree
 from pattern.text.search import search
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 
@@ -22,6 +23,9 @@ last_message = {}
 
 # list used for collecting user names (as there is no member list yet)
 known_names = set([])
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
 
 
 class DeineMuddaBot:
@@ -87,11 +91,6 @@ class DeineMuddaBot:
         if name not in known_names:
             known_names.add(name)
 
-        # print tags and chunks for debugging
-        # TODO: use logger for this and don't log in production at all
-        # pprint()
-        parsed = parse(update.message.text, relations=True, lemmata=True)
-
         response_message = self._response_manager.process_message(name, update.message.text)
         if response_message:
             self._shout(bot, update.message, response_message)
@@ -121,7 +120,7 @@ class DeineMuddaBot:
                         del spamtracker[user_id]
                         # print(spamtracker)
                         kicked = bot.kickChatMember(update.message.chat_id, user_id)
-                        print('Kicked: ' + kicked)
+                        LOGGER.debug("Kicked: {}".format(kicked))
                     else:
                         bot.send_message(update.message.chat_id,
                                          parse_mode='HTML',
@@ -146,7 +145,7 @@ class DeineMuddaBot:
                 message_text = last_message[chat_id]
                 for match in search('ADJP', parsetree(message_text, relations=True)):
                     word = match.constituents()[-1].string
-                    print("Chunk to counter: " + word)
+                    LOGGER.debug("Chunk to counter: " + word)
                     if randint(0, 3) == 3:
                         user_id = randint(0, len(known_names) - 1)
                         text = list(known_names)[user_id] + 's mudda is\' ' + word

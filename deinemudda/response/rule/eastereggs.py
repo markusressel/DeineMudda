@@ -15,7 +15,7 @@ class SpongebobRule(ResponseRule):
         return 100.0
 
     def matches(self, message: str):
-        return re.search(r"^wer wohnt in ner ananas ganz tief im meer$", message)
+        return re.search(r"^wer wohnt in ner ananas ganz tief im meer\?", message)
 
     def get_response(self, sender: str, message: str):
         return 'spongebob schwammkopf'
@@ -32,7 +32,7 @@ class RicolaRule(ResponseRule):
         return 100.0
 
     def matches(self, message: str):
-        return re.search(r"^wer (hat es|hats) erfunden?", message)
+        return re.search(r"^wer (hat es|hats) erfunden\?", message)
 
     def get_response(self, sender: str, message: str):
         if randint(0, 3) == 3:
