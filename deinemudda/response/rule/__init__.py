@@ -7,11 +7,15 @@ class ResponseRule:
         self._persistence = persistence
 
     @property
-    def description(self):
+    def description(self) -> str:
         """
         :return: A description of what this rule is about
         """
         raise NotImplementedError()
+
+    @property
+    def priority(self) -> float:
+        return 0.0
 
     def matches(self, message: str):
         raise NotImplementedError()

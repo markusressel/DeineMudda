@@ -10,8 +10,12 @@ class SpongebobRule(ResponseRule):
     def description(self) -> str:
         return "Spongebob easter egg"
 
+    @property
+    def priority(self) -> float:
+        return 100.0
+
     def matches(self, message: str):
-        return re.search(r"^wer wohnt in ner ananas ganz tief im meer?", message)
+        return re.search(r"^wer wohnt in ner ananas ganz tief im meer$", message)
 
     def get_response(self, sender: str, message: str):
         return 'spongebob schwammkopf'
@@ -22,6 +26,10 @@ class RicolaRule(ResponseRule):
     @property
     def description(self) -> str:
         return "Ricola easter egg"
+
+    @property
+    def priority(self) -> float:
+        return 100.0
 
     def matches(self, message: str):
         return re.search(r"^wer (hat es|hats) erfunden?", message)
@@ -38,6 +46,10 @@ class GhostbustersRule(ResponseRule):
     @property
     def description(self) -> str:
         return "Ghostbusters easter egg"
+
+    @property
+    def priority(self) -> float:
+        return 100.0
 
     def matches(self, message: str):
         return re.search(r"^who y(ou|a) gonna call\?", message)

@@ -18,7 +18,8 @@ class ResponseManager:
         from deinemudda.response import rule
         rule_classes = util.find_implementations(ResponseRule, rule)
         # construct implementations
-        return list(map(lambda x: x(self._persistence), rule_classes))
+        rule_instances = list(map(lambda x: x(self._persistence), rule_classes))
+        return sorted(rule_instances, key=lambda x: x.priority, reverse=True)
 
     def process_message(self, sender: str, message: str) -> str or None:
         """
