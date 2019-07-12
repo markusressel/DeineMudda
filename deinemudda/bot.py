@@ -29,7 +29,8 @@ class DeineMuddaBot:
         self._config = config
         self._persistence = persistence
 
-        self._updater = Updater(token=self._config.TELEGRAM_BOT_TOKEN.value, use_context=True)
+        # self._updater = Updater(token=self._config.TELEGRAM_BOT_TOKEN.value, use_context=True)
+        self._updater = Updater(token=self._config.TELEGRAM_BOT_TOKEN.value)
         self._updater.dispatcher.add_handler(
             MessageHandler(filters=Filters.text, callback=self._reply))
 
