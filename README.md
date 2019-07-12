@@ -11,6 +11,11 @@ install `python-mysqlclient` as a system package manually.
 
 ## Debugging and execution
 
+Because of [PEP 479](https://www.python.org/dev/peps/pep-0479/) which is
+not yet respected in the `pattern` library used by this bot
+it is required to use a python 3 runtime lower than 3.7 so 3.6 is 
+recommended.
+
 Make sure to use the project base dir as the working directory and run: 
 ```
 python3 ./deinemudda/main.py

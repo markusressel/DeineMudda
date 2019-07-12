@@ -2,15 +2,16 @@ import datetime
 import re
 from random import randint
 
-from pattern.text.de import parse, parsetree, pprint
+from pattern.text.de import parsetree, parse
 from pattern.text.search import search
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 
 from deinemudda.config import AppConfig
-# dictionary used for antispam-protection, if activated
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE
 from deinemudda.persistence import Persistence
+from deinemudda.util import send_message
 
+# dictionary used for antispam-protection, if activated
 spamtracker = {}
 
 # dictionary used to store per-chat-settings
@@ -57,23 +58,21 @@ class DeineMuddaBot:
         """
         self._updater.stop()
 
-    def _send_message(self, bot, message, text, reply=True):
+    def _shout(self, bot, message, text: str, reply: bool = True):
+        shouting_text = "<b>{}!!!</b>".format(text.upper())
+
+        reply_to_message_id = None
         if reply:
-            bot.send_message(
-                chat_id=message.chat_id,
-                reply_to_message_id=message.message_id,
-                parse_mode='HTML',
-                text='<b>' + text.upper() + '!!!</b>'
-            )
-        else:
-            bot.send_message(
-                chat_id=message.chat_id,
-                parse_mode='HTML',
-                text='<b>' + text.upper() + '!!!</b>'
-            )
+            reply_to_message_id = message.message_id
+
+        send_message(bot, message.chat_id,
+                     message=shouting_text,
+                     parse_mode='HTML',
+                     reply_to=reply_to_message_id)
 
     def _reply(self, bot, update):
         # get trigger_chance-setting per chat
+        # TODO: get this from persistence
         chat_id = update.message.chat_id
         if chat_id not in settings:
             new_elem = {chat_id: [5, 'on']}
@@ -82,41 +81,44 @@ class DeineMuddaBot:
         last_message.update({chat_id: update.message.text})
 
         # if user-name is new (as in: unknown to the bot), add it to known names
+        # TODO: add this to persistence(?)
         name = update.message.from_user.first_name.upper()
         if name not in known_names:
             known_names.add(name)
 
         # print tags and chunks for debugging
-        pprint(parse(update.message.text, relations=True, lemmata=True))
+        # TODO: use logger for this and don't log in production at all
+        # pprint()
+        parsed = parse(update.message.text, relations=True, lemmata=True)
 
         # remove duplicate whitespaces from the message
         input = re.sub(' +', ' ', update.message.text)
-        # remove all special characters from the message
-        input = re.sub('[^A-Za-z0-9| |?]+', '', input)
         # we will only parse the message in lower case
         input = input.lower()
+        # remove all characters from the message except the given ones
+        input = re.sub('[^a-z0-9| ?]+', '', input)
 
         # reflect counter intelligence
         hit = re.search(r"^dei(ne)? (mudda|mutter|mama)", input)
-        if hit: return self._send_message(bot, update.message, 'nee, ' + hit.group(0))
+        if hit: return self._shout(bot, update.message, 'nee, ' + hit.group(0))
 
         # easter egg #1: spongebob
         if re.search(r"^wer wohnt in ner ananas ganz tief im meer?", input):
-            return self._send_message(bot, update.message, 'spongebob schwammkopf')
+            return self._shout(bot, update.message, 'spongebob schwammkopf')
         # easter egg #2: ricola / me
         elif re.search(r"^wer (hat es|hats) erfunden?", input):
             if randint(0, 3) == 3:
-                return self._send_message(bot, update.message, 'benjamin oesterle')
+                return self._shout(bot, update.message, 'benjamin oesterle')
             else:
-                return self._send_message(bot, update.message, 'ricola')
+                return self._shout(bot, update.message, 'ricola')
         # easter egg #3: ghostbusters
         elif re.search(r"^who y(ou|a) gonna call\?", input):
-            return self._send_message(bot, update.message, 'ghostbusters')
+            return self._shout(bot, update.message, 'ghostbusters')
 
         # german/english trigger for why questions
         if re.search(r"(^| )(warum|wieso|weshalb|weswegen|why)(| (.)+)\?", input):
             if randint(0, 100) <= trigger_chance:
-                return self._send_message(bot, update.message, 'sex')
+                return self._shout(bot, update.message, 'sex')
 
         # adjective counter intelligence
         for match in search('ADJP', parsetree(update.message.text, relations=True)):
@@ -125,22 +127,22 @@ class DeineMuddaBot:
                 print("Chunk to counter: " + word)
                 if randint(0, 3) == 3:
                     user_id = randint(0, len(known_names) - 1)
-                    return self._send_message(bot, update.message, list(known_names)[user_id] + 's mudda is\' ' + word)
+                    return self._shout(bot, update.message, list(known_names)[user_id] + 's mudda is\' ' + word)
                 else:
-                    return self._send_message(bot, update.message, 'deine mudda is\' ' + word)
+                    return self._shout(bot, update.message, 'deine mudda is\' ' + word)
 
         # german trigger for who questions
         if re.search(r"(^| )(irgend)?(wer|jemand)(| (.)+)\?", input):
             if randint(0, 100) <= trigger_chance:
                 if randint(0, 3) == 3:
                     user_id = randint(0, len(known_names) - 1)
-                    return self._send_message(bot, update.message, list(known_names)[user_id] + 's mudda')
+                    return self._shout(bot, update.message, list(known_names)[user_id] + 's mudda')
                 else:
-                    return self._send_message(bot, update.message, 'deine mudda')
+                    return self._shout(bot, update.message, 'deine mudda')
         # english trigger for who questions
         elif re.search(r"who(| (.)+)\?", input):
             if randint(0, 100) <= trigger_chance:
-                self._send_message(bot, update.message, 'your momma')
+                self._shout(bot, update.message, 'your momma')
 
     def _antispam(self, bot, update, n=30):
         chat_id = update.message.chat_id
@@ -201,7 +203,7 @@ class DeineMuddaBot:
             else:
                 text = 'deine mudda'
 
-            self._send_message(bot, update.message, text, reply=False)
+            self._shout(bot, update.message, text, reply=False)
 
     def _set_antispam(self, bot, update, args):
         # only run if user is administrator/creator or it's a private chat
