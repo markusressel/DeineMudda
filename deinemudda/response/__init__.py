@@ -23,12 +23,13 @@ class ResponseManager:
     def process_message(self, sender: str, message: str) -> str or None:
         """
         Processes the given message and returns a response if one of the response rules match
-        :param sender:
-        :param message:
-        :return: Response or None
+        :param sender: the message sender
+        :param message: the message
+        :return: Response message or None
         """
         normalized_message = self._normalize(message)
         for rule in self.response_rules:
+            # TODO: get trigger change for specific rule based on chat id
             if rule.matches(message):
                 return rule.get_response(sender, normalized_message)
 

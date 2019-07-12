@@ -1,5 +1,4 @@
 import datetime
-import re
 from random import randint
 
 from pattern.text.de import parsetree, parse
@@ -96,24 +95,6 @@ class DeineMuddaBot:
         response_message = self._response_manager.process_message(name, update.message.text)
         if response_message:
             self._shout(bot, update.message, response_message)
-            return
-
-        # TODO: refactor those to rules
-        input = update.message.text
-        # reflect counter intelligence
-        hit = re.search(r"^dei(ne)? (mudda|mutter|mama)", input)
-        if hit: return self._shout(bot, update.message, 'nee, ' + hit.group(0))
-
-        # adjective counter intelligence
-        for match in search('ADJP', parsetree(update.message.text, relations=True)):
-            if randint(0, 100) <= trigger_chance:
-                word = match.constituents()[-1].string
-                print("Chunk to counter: " + word)
-                if randint(0, 3) == 3:
-                    user_id = randint(0, len(known_names) - 1)
-                    return self._shout(bot, update.message, list(known_names)[user_id] + 's mudda is\' ' + word)
-                else:
-                    return self._shout(bot, update.message, 'deine mudda is\' ' + word)
 
     def _antispam(self, bot, update, n=30):
         chat_id = update.message.chat_id
