@@ -36,4 +36,24 @@ class Chat(Base):
         secondary=association_table,
         back_populates="chats",
         lazy='joined')
-    settings = relationship("Setting", back_populates="chat", lazy='joined')
+    settings = relationship(
+        "Setting",
+        back_populates="chat",
+        single_parent=True,
+        cascade="all, delete-orphan",
+        lazy='joined')
+
+    def get_setting(self, key: str, default: str) -> str:
+        setting = list(filter(lambda x: x.key == key, self.settings))
+        if len(setting) > 0:
+            return setting[0].value
+        else:
+            return default
+
+    def set_setting(self, key: str, value: str):
+        setting = list(filter(lambda x: x.key == key, self.settings))
+        if len(setting) > 0:
+            setting[0].value = value
+        else:
+            new_setting = Setting(key=key, value=value)
+            self.settings.append(new_setting)

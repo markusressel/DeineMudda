@@ -43,14 +43,14 @@ class ResponseManager:
 
         for rule in self.response_rules:
             # TODO: get trigger chance for specific rule based on chat id
-            trigger_chance = chat.get_setting("{}-TriggerChance".format(rule.__id__), default=0.2)
+            trigger_chance = int(chat.get_setting("{}-TriggerChance".format(rule.__id__), default="1"))
 
-            if random.random() >= trigger_chance:
+            if random() >= trigger_chance:
                 # skip rule
                 continue
 
             if rule.matches(message):
-                return rule.get_response(sender, normalized_message)
+                return rule.get_response(chat, sender, normalized_message)
 
     @staticmethod
     def _normalize(message: str):

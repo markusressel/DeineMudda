@@ -1,6 +1,6 @@
 import datetime
 import logging
-from random import randint
+from random import randint, choice
 
 from pattern.text.de import parsetree
 from pattern.text.search import search
@@ -8,7 +8,7 @@ from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
 
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE
-from deinemudda.persistence import Persistence
+from deinemudda.persistence import Persistence, User, Chat
 from deinemudda.response import ResponseManager
 from deinemudda.util import send_message
 
@@ -35,15 +35,15 @@ class DeineMuddaBot:
         # self._updater = Updater(token=self._config.TELEGRAM_BOT_TOKEN.value, use_context=True)
         self._updater = Updater(token=self._config.TELEGRAM_BOT_TOKEN.value)
 
-        handlers = {
-            0: [MessageHandler(Filters.text, self._message_callback),
+        handler_groups = {
+            1: [MessageHandler(Filters.text, self._message_callback),
                 CommandHandler(COMMAND_MUDDA, self._mudda_command_callback),
                 CommandHandler(COMMAND_SET_ANTISPAM, self._set_antispam_command_callback, pass_args=True),
                 CommandHandler(COMMAND_SET_CHANCE, self._set_chance_command_callback, pass_args=True)],
-            1: [MessageHandler(Filters.group & (~ Filters.reply), self._group_message_callback)]
+            2: [MessageHandler(Filters.group & (~ Filters.reply), self._group_message_callback)]
         }
 
-        for group, handlers in handlers.items():
+        for group, handlers in handler_groups.items():
             for handler in handlers:
                 self._updater.dispatcher.add_handler(handler, group=group)
 
@@ -92,6 +92,7 @@ class DeineMuddaBot:
 
     def _group_message_callback(self, bot, update):
         chat_id = update.message.chat_id
+        chat_type = update.effective_chat.type
 
         my_id = bot.get_me().id
 
@@ -99,31 +100,30 @@ class DeineMuddaBot:
             for member in update.message.new_chat_members:
                 if member.id == my_id:
                     LOGGER.debug("Bot was added to group: {}".format(chat_id))
+                    chat_entity = Chat(id=chat_id, type=chat_type)
+                    self._persistence.add_or_update_chat(chat_entity)
                 else:
                     LOGGER.debug("{} ({}) joined group {}".format(member.full_name, member.id, chat_id))
+                    chat = self._persistence.get_chat(chat_id)
+                    user_entity = User(
+                        id=member.id,
+                        first_name=member.first_name,
+                        full_name=member.full_name,
+                        username=member.username
+                    )
+                    chat.users.append(user_entity)
+                    self._persistence.add_or_update_chat(chat)
 
         if update.message.left_chat_member:
             member = update.message.left_chat_member
             if member.id == my_id:
                 LOGGER.debug("Bot was removed from group: {}".format(chat_id))
+                self._persistence.delete_chat(chat_id)
             else:
                 LOGGER.debug("{} ({}) left group {}".format(member.full_name, member.id, chat_id))
-
-        # # if user-name is new (as in: unknown to the bot), add it to known names
-        # from_user = update.message.from_user
-        # users = [from_user]
-        # for user in users:
-        #     user_entity = User(
-        #         id=user.id,
-        #         username=user.first_name
-        #     )
-        #     self._persistence.add_or_update_chat(user_entity)
-        #
-        # chat_entity = Chat(
-        #     id=chat_id,
-        #
-        # )
-        # self._persistence.add_or_update_chat(chat_entity)
+                chat = self._persistence.get_chat(chat_id)
+                chat.users = filter(lambda x: x.id != member.id, chat.users)
+                self._persistence.add_or_update_chat(chat)
 
     def _antispam(self, bot, update, n=30):
         chat_id = update.message.chat_id
@@ -167,32 +167,35 @@ class DeineMuddaBot:
             return True
 
     def _mudda_command_callback(self, bot, update):
-        no_spam = self._antispam(bot, update)
+        chat_id = update.message.chat_id
 
+        no_spam = self._antispam(bot, update)
         if not no_spam:
             return
 
-        chat_id = update.message.chat_id
+        text = "deine mudda"
         if chat_id in last_message:
             message_text = last_message[chat_id]
             for match in search('ADJP', parsetree(message_text, relations=True)):
                 word = match.constituents()[-1].string
                 LOGGER.debug("Chunk to counter: " + word)
                 if randint(0, 3) == 3:
-                    user_id = randint(0, len(known_names) - 1)
-                    text = list(known_names)[user_id] + 's mudda is\' ' + word
+                    chat = self._persistence.get_chat(chat_id)
+                    user = choice(chat.users)
+
+                    text = "{}s mudda is' {}".format(user.first_name, word)
                 else:
-                    text = 'deine mudda is\' ' + word
-        else:
-            text = 'deine mudda'
+                    text = "deine mudda is' {}".format(word)
 
         self._shout(bot, update.message, text, reply=False)
 
     def _set_antispam_command_callback(self, bot, update, args):
         # only run if user is administrator/creator or it's a private chat
+        chat_id = update.message.chat_id
+        from_user = update.message.from_user
         chat_type = update.effective_chat.type
-        # member = bot.getChatMember(update.message.chat_id, update.message.from_user.id)
-        member = update.message.from_user
+
+        member = bot.getChatMember(chat_id, from_user.id)
         if chat_type == 'private' or member.status == "administrator" or member.status == "creator":
             # TODO: use permission decorator for this
             pass
@@ -227,7 +230,7 @@ class DeineMuddaBot:
         chat_id = update.message.chat_id
         from_user = update.message.from_user
 
-        chat_type = bot.getChat(chat_id).type
+        chat_type = update.effective_chat.type
         member = bot.getChatMember(chat_id, from_user.id)
 
         # only run if user is administrator/creator or it's a private chat

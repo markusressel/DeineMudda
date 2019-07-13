@@ -14,6 +14,9 @@ class User(Base):
     id = Column(Integer, primary_key=True)
 
     username = Column(String)
+    first_name = Column(String)
+    full_name = Column(String)
+
     chats = relationship(
         "Chat",
         secondary=association_table,

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from deinemudda.persistence import Persistence
+from deinemudda.persistence import Persistence, Chat
 
 
 class ResponseRule:
@@ -33,5 +33,5 @@ class ResponseRule:
         raise NotImplementedError()
 
     @abstractmethod
-    def get_response(self, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str):
         raise NotImplementedError()

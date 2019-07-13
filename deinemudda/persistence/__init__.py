@@ -48,18 +48,29 @@ class Persistence:
         finally:
             session.close()
 
-    def get_chat(self, id: int):
+    def get_chat(self, entity_id: int) -> Chat:
         with self._session_scope() as session:
-            return session.query(Chat).get(id)
+            return session.query(Chat).get(entity_id)
 
-    def add_or_update_chat(self, chat: Chat):
+    def add_or_update_chat(self, chat: Chat) -> None:
         with self._session_scope(write=True) as session:
             session.add(chat)
 
-    def get_user(self, id: int):
-        with self._session_scope() as session:
-            return session.query(User).get(id)
+    def delete_chat(self, entity_id: int) -> None:
+        with self._session_scope(write=True) as session:
+            chat = session.query(Chat).filter_by(id=entity_id).first()
+            session.query(Chat).filter_by(id=entity_id).delete()
+            if chat is not None:
+                # delete orphans (users without any chat)
+                for user in chat.users:
+                    chat = session.query(Chat, User).filter(Chat.users.any(id=user.id)).first()
+                    if chat is None:
+                        user.delete()
 
-    def add_or_update_user(self, user: User):
+    def get_user(self, entity_id: int) -> User:
+        with self._session_scope() as session:
+            return session.query(User).get(entity_id)
+
+    def add_or_update_user(self, user: User) -> None:
         with self._session_scope(write=True) as session:
             session.add(user)

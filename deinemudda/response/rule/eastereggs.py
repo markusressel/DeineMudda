@@ -1,6 +1,7 @@
 import re
 from random import randint
 
+from deinemudda.persistence import Chat
 from deinemudda.response.rule import ResponseRule
 
 
@@ -10,9 +11,9 @@ class SpongebobRule(ResponseRule):
     __priority__ = 100.0
 
     def matches(self, message: str):
-        return re.search(r"^wer wohnt in ner ananas ganz tief im meer\?", message)
+        return re.search(r"^wer wohnt in ner ananas ganz tief im meer\?", message, re.IGNORECASE)
 
-    def get_response(self, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str):
         return 'spongebob schwammkopf'
 
 
@@ -22,9 +23,9 @@ class RicolaRule(ResponseRule):
     __priority__ = 100.0
 
     def matches(self, message: str):
-        return re.search(r"^wer (hat es|hats) erfunden\?", message)
+        return re.search(r"^wer (hat es|hats) erfunden\?", message, re.IGNORECASE)
 
-    def get_response(self, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str):
         if randint(0, 3) == 3:
             return 'benjamin oesterle'
         else:
@@ -37,7 +38,7 @@ class GhostbustersRule(ResponseRule):
     __priority__ = 100.0
 
     def matches(self, message: str):
-        return re.search(r"^who y(ou|a) gonna call\?", message)
+        return re.search(r"^who y(ou|a) gonna call\?", message, re.IGNORECASE)
 
-    def get_response(self, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str):
         return 'ghostbusters'
