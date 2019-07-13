@@ -44,8 +44,8 @@ class ResponseManager:
         for rule in self.response_rules:
             # TODO: get trigger chance for specific rule based on chat id
             # trigger_chance = int(chat.get_setting("{}-TriggerChance".format(rule.__id__), default="1"))
-            trigger_chance = int(chat.get_setting("TriggerChance", default="1"))
-
+            trigger_chance = float(chat.get_setting("TriggerChance", default="1"))
+            
             if random() >= trigger_chance:
                 # skip rule
                 continue

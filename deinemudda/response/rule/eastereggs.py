@@ -11,7 +11,7 @@ class SpongebobRule(ResponseRule):
     __priority__ = 100.0
 
     def matches(self, message: str):
-        return re.search(r"^wer wohnt in ner ananas ganz tief im meer\?", message, re.IGNORECASE)
+        return re.search(r"^wer wohnt in ner ananas ganz tief im meer", message, re.IGNORECASE)
 
     def get_response(self, chat: Chat, sender: str, message: str):
         return 'spongebob schwammkopf'
@@ -23,7 +23,7 @@ class RicolaRule(ResponseRule):
     __priority__ = 100.0
 
     def matches(self, message: str):
-        return re.search(r"^wer (hat es|hats) erfunden\?", message, re.IGNORECASE)
+        return re.search(r"^wer (hat es|hats) erfunden", message, re.IGNORECASE)
 
     def get_response(self, chat: Chat, sender: str, message: str):
         if randint(0, 3) == 3:
@@ -38,7 +38,7 @@ class GhostbustersRule(ResponseRule):
     __priority__ = 100.0
 
     def matches(self, message: str):
-        return re.search(r"^who y(ou|a) gonna call\?", message, re.IGNORECASE)
+        return re.search(r"^who y(ou|a) gonna call", message, re.IGNORECASE)
 
     def get_response(self, chat: Chat, sender: str, message: str):
         return 'ghostbusters'

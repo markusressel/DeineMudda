@@ -37,7 +37,7 @@ class WhyRule(ResponseRule):
     __description__ = "Respond to 'why' questions"
 
     def matches(self, message: str):
-        return re.search(r"(^| )(warum|wieso|weshalb|weswegen|why)(| (.)+)\?", message, re.IGNORECASE)
+        return re.search(r"(^| )(warum|wieso|weshalb|weswegen|why)(| (.)+)", message, re.IGNORECASE)
 
     def get_response(self, chat: Chat, sender: str, message: str):
         return 'sex'
