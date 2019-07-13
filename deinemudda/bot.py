@@ -15,9 +15,6 @@ from deinemudda.util import send_message
 # dictionary used for antispam-protection, if activated
 spamtracker = {}
 
-# dictionary used to store per-chat-settings
-settings = {}
-
 # dictionary used to store last message per chat
 last_message = {}
 
@@ -74,13 +71,7 @@ class DeineMuddaBot:
                      reply_to=reply_to_message_id)
 
     def _message_callback(self, bot, update):
-        # get trigger_chance-setting per chat
-        # TODO: get this from persistence
         chat_id = update.message.chat_id
-        if chat_id not in settings:
-            new_elem = {chat_id: [5, 'on']}
-            settings.update(new_elem)
-        trigger_chance = settings[chat_id][0]
         last_message.update({chat_id: update.message.text})
 
         from_user = update.message.from_user
@@ -127,11 +118,8 @@ class DeineMuddaBot:
 
     def _antispam(self, bot, update, n=30):
         chat_id = update.message.chat_id
-        if chat_id not in settings:
-            new_elem = {chat_id: [30, 'on']}
-            settings.update(new_elem)
-        trigger_chance = settings[chat_id][0]
-        anti_spam = settings[chat_id][1]
+        chat = self._persistence.get_chat(chat_id)
+        anti_spam = chat.get_setting("antispam", "on")
 
         if anti_spam == "off":
             return True
@@ -215,16 +203,13 @@ class DeineMuddaBot:
                 raise ValueError("Invalid argument")
 
             chat_id = update.message.chat_id
-            bot.send_message(update.message.chat_id, text='Turn antispam ' + args[0])
-            if chat_id in settings:
-                trigger_chance = settings[chat_id][0]
-                new_elem = {chat_id: [trigger_chance, args[0]]}
-            else:
-                new_elem = {chat_id: [30, args[0]]}
-            settings.update(new_elem)
+            chat = self._persistence.get_chat(chat_id)
+            chat.set_setting("antispam", new_value)
+            self._persistence.add_or_update_chat(chat)
+
+            send_message(bot, update.message.chat_id, message="Antispam: {}".format(new_value))
         except ValueError:
-            bot.send_message(update.message.chat_id, text='set_antispam <on|off>')
-            return
+            send_message(bot, update.message.chat_id, message="set_antispam <on|off>")
 
     def _set_chance_command_callback(self, bot, update, args):
         chat_id = update.message.chat_id
@@ -248,19 +233,17 @@ class DeineMuddaBot:
             if len(args) > 1:
                 raise ValueError("Invalid argument count: {}".format(args))
 
-            chance = int(args[0])
+            chance = float(args[0])
 
             # ... and in valid range 0-100
-            if chance < 0 or chance > 100:
+            if chance < 0 or chance > 1:
                 raise ValueError("Illegal propability value")
         except ValueError:
-            send_message(bot, chat_id, message="set_chance <0-100>")
+            send_message(bot, chat_id, message="set_chance <0.00-1.00>")
             return
 
-        bot.send_message(chat_id, text='Set trigger-chance ' + args[0])
-        if chat_id in settings:
-            anti_spam = settings[chat_id][1]
-            new_elem = {chat_id: [chance, anti_spam]}
-        else:
-            new_elem = {chat_id: [chance, 'on']}
-        settings.update(new_elem)
+        chat = self._persistence.get_chat(chat_id)
+        chat.set_setting("TriggerChance", str(chance))
+        self._persistence.add_or_update_chat(chat)
+
+        bot.send_message(chat_id, text="TriggerChance set to {}".format(chance))
