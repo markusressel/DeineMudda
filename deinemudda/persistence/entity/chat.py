@@ -1,11 +1,21 @@
-from sqlalchemy import Column, Integer, PickleType, Table, ForeignKey
+from sqlalchemy import Column, Integer, ForeignKey, String, Table
 from sqlalchemy.orm import relationship
 
 from deinemudda.persistence.entity import Base
 
 
-class SettingsPickleType(PickleType):
-    trigger_chance = Integer
+class Setting(Base):
+    """
+    Data model of chat specific settings
+    """
+    __tablename__ = 'settings'
+
+    id = Column(Integer, primary_key=True)
+    chat_id = Column(Integer, ForeignKey('chats.id'))
+    chat = relationship("Chat", back_populates="settings")
+
+    key = Column(String, unique=True, index=True)
+    value = Column(String)
 
 
 association_table = Table('association', Base.metadata,
@@ -20,9 +30,10 @@ class Chat(Base):
     __tablename__ = 'chats'
 
     id = Column(Integer, primary_key=True)
+    type = Column(String)
     users = relationship(
         "User",
         secondary=association_table,
         back_populates="chats",
         lazy='joined')
-    settings = Column(SettingsPickleType())
+    settings = relationship("Setting", back_populates="chat", lazy='joined')

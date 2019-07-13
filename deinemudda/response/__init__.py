@@ -1,15 +1,19 @@
 import re
+from random import random
 
 from deinemudda import util
-from deinemudda.persistence import Persistence
+from deinemudda.persistence import Persistence, Chat
 from deinemudda.response.rule import ResponseRule
 
 
 class ResponseManager:
+    """
+    Manages response rules
+    """
 
     def __init__(self, persistence: Persistence):
-        self._persistence = persistence
-        self.response_rules = self._find_rules()
+        self._persistence: Persistence = persistence
+        self.response_rules: [ResponseRule] = self._find_rules()
 
     def _find_rules(self):
         """
@@ -19,11 +23,12 @@ class ResponseManager:
         rule_classes = util.find_implementations(ResponseRule, rule)
         # construct implementations
         rule_instances = list(map(lambda x: x(self._persistence), rule_classes))
-        return sorted(rule_instances, key=lambda x: x.priority, reverse=True)
+        return sorted(rule_instances, key=lambda x: x.__priority__, reverse=True)
 
-    def process_message(self, sender: str, message: str) -> str or None:
+    def process_message(self, chat: Chat, sender: str, message: str) -> str or None:
         """
         Processes the given message and returns a response if one of the response rules match
+        :param chat: the chat this message was sent in
         :param sender: the message sender
         :param message: the message
         :return: Response message or None
@@ -37,7 +42,13 @@ class ResponseManager:
         parsed = text.parse(normalized_message, relations=True, lemmata=True)
 
         for rule in self.response_rules:
-            # TODO: get trigger change for specific rule based on chat id
+            # TODO: get trigger chance for specific rule based on chat id
+            trigger_chance = chat.get_setting("{}-TriggerChance".format(rule.__id__), default=0.2)
+
+            if random.random() >= trigger_chance:
+                # skip rule
+                continue
+
             if rule.matches(message):
                 return rule.get_response(sender, normalized_message)
 

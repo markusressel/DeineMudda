@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.util.compat import contextmanager
 
 from deinemudda.config import AppConfig
+from deinemudda.persistence.entity.chat import Chat
 from deinemudda.persistence.entity.user import User
 
 LOGGER = logging.getLogger(__name__)
@@ -47,6 +48,18 @@ class Persistence:
         finally:
             session.close()
 
-    def add(self, user: User):
+    def get_chat(self, id: int):
+        with self._session_scope() as session:
+            return session.query(Chat).get(id)
+
+    def add_or_update_chat(self, chat: Chat):
+        with self._session_scope(write=True) as session:
+            session.add(chat)
+
+    def get_user(self, id: int):
+        with self._session_scope() as session:
+            return session.query(User).get(id)
+
+    def add_or_update_user(self, user: User):
         with self._session_scope(write=True) as session:
             session.add(user)

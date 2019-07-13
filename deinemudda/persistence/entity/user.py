@@ -15,7 +15,7 @@ class User(Base):
 
     username = Column(String)
     chats = relationship(
-        "chats",
+        "Chat",
         secondary=association_table,
         back_populates="users",
         lazy='joined')

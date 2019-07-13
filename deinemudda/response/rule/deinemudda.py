@@ -5,10 +5,8 @@ from deinemudda.response.rule import ResponseRule
 
 
 class WhoGermanRule(ResponseRule):
-
-    @property
-    def description(self) -> str:
-        return "Respond to 'who' questions in german"
+    __id__ = "WhoGermanRule"
+    __description__ = "Respond to 'who' questions in german"
 
     def matches(self, message: str):
         return re.search(r"(^| )(irgend)?(wer|jemand)(| (.)+)\?", message)
@@ -26,10 +24,8 @@ class WhoGermanRule(ResponseRule):
 
 
 class WhoEnglishRule(ResponseRule):
-
-    @property
-    def description(self) -> str:
-        return "Respond to 'who' questions in english"
+    __id__ = "WhoEnglishRule"
+    __description__ = "Respond to 'who' questions in english"
 
     def matches(self, message: str):
         return re.search(r"who(| (.)+)\?", message)
@@ -39,10 +35,8 @@ class WhoEnglishRule(ResponseRule):
 
 
 class WhyRule(ResponseRule):
-
-    @property
-    def description(self) -> str:
-        return "Respond to 'why' questions"
+    __id__ = "WhyRule"
+    __description__ = "Respond to 'why' questions"
 
     def matches(self, message: str):
         return re.search(r"(^| )(warum|wieso|weshalb|weswegen|why)(| (.)+)\?", message)
@@ -52,11 +46,10 @@ class WhyRule(ResponseRule):
 
 
 class ReflectCounterIntelligenceRule(ResponseRule):
-    regex = r"^dei(ne)? (mudda|mutter|mama)"
+    __id__ = "ReflectCounterIntelligenceRule"
+    __description__ = "Respond to messages containing phrases similar to 'your mother'"
 
-    @property
-    def description(self) -> str:
-        return "Respond to messages containing phrases similar to 'your mother'"
+    regex = r"^dei(ne)? (mudda|mutter|mama)"
 
     def matches(self, message: str):
         return re.search(self.regex, message)
@@ -67,10 +60,8 @@ class ReflectCounterIntelligenceRule(ResponseRule):
 
 
 class AdjectiveCounterIntelligenceRule(ResponseRule):
-
-    @property
-    def description(self) -> str:
-        return "Adjective counter intelligence"
+    __id__ = "AdjectiveCounterIntelligenceRule"
+    __description__ = "Adjective counter intelligence"
 
     def matches(self, message: str):
         # we need to do the parsetreecalculation anyway so
@@ -80,7 +71,8 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
     def get_response(self, sender: str, message: str):
         from pattern.text.search import search
         from pattern.text.de import parsetree
-        for match in search('ADJP', parsetree(message, relations=True)):
+        message_tree = parsetree(message, relations=True)
+        for match in search('ADJP', message_tree):
             word = match.constituents()[-1].string
 
             if randint(0, 3) == 3:
