@@ -51,9 +51,9 @@ class CommandArgument:
         Generates the usage text for this argument
         :return: usage text line
         """
-        message = "  {} ({}): {}".format(
+        message = "  {} (`{}`): {}".format(
             escape_for_markdown(self.name),
-            escape_for_markdown(self.type.__name__),
+            self.type.__name__,
             escape_for_markdown(self.description)
         )
         if self.default is not None:
