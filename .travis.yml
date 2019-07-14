@@ -1,7 +1,5 @@
 language: python
 python:
-  - "3.4"
-  - "3.5"
   - "3.6"
   # currently not compatible with 3.7
 
@@ -18,8 +16,12 @@ script:
   - nosetests
 
 deploy:
-  provider: script
-  script: bash docker_push
-  on:
-    branch: master
-    tags: true
+  - provider: script
+    script: bash docker_push
+    on:
+      branch: master
+      tags: true
+  - provider: script
+    script: bash docker_push_latest
+    on:
+      branch: master
