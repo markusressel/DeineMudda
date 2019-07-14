@@ -5,6 +5,38 @@ from deinemudda.persistence import Chat
 from deinemudda.response.rule import ResponseRule
 
 
+class GenitiveRule(ResponseRule):
+    __id__ = "GenitiveRule"
+    __description__ = "Respond to 'wessen' questions in german"
+
+    def matches(self, message: str):
+        return re.search(r"(^| )(wessen)(| (.)+)", message, re.IGNORECASE)
+
+    def get_response(self, chat: Chat, sender: str, message: str):
+        if randint(0, 3) == 3:
+            chat = self._persistence.get_chat(chat.id)
+            user = choice(chat.users)
+            return "von {}'s mudda".format(user.first_name)
+        else:
+            return 'von deiner mudda'
+
+
+class DativRule(ResponseRule):
+    __id__ = "DativRule"
+    __description__ = "Respond to 'wem' questions in german"
+
+    def matches(self, message: str):
+        return re.search(r"(^| )(wem)(| (.)+)", message, re.IGNORECASE)
+
+    def get_response(self, chat: Chat, sender: str, message: str):
+        if randint(0, 3) == 3:
+            chat = self._persistence.get_chat(chat.id)
+            user = choice(chat.users)
+            return "{}'s mudda".format(user.first_name)
+        else:
+            return 'deiner mudda'
+
+
 class WhoGermanRule(ResponseRule):
     __id__ = "WhoGermanRule"
     __description__ = "Respond to 'who' questions in german"
