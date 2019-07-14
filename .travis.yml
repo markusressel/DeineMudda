@@ -12,7 +12,6 @@ services:
 before_install:
   docker build -t markusressel/deinemudda .
 install:
-  - pip install .
   - pip install -r test_requirements.txt
 # command to run tests
 script:
