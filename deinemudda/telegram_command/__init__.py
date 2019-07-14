@@ -58,9 +58,7 @@ def generate_help_message(name: str, description: str, args: []) -> str:
         lines.append("Arguments: ")
         lines.append(arguments)
         lines.append("Example:")
-        lines.append("  `{} {}`".format(
-            escape_for_markdown(name),
-            escape_for_markdown(argument_examples)))
+        lines.append("  `{} {}`".format(name, argument_examples))
 
     return "\n".join(lines)
 
