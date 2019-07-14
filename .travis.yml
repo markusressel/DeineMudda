@@ -17,11 +17,14 @@ script:
 
 deploy:
   - provider: script
+    skip_cleanup: true
     script: bash docker_push
     on:
       branch: master
       tags: true
   - provider: script
+    skip_cleanup: true
     script: bash docker_push_latest
     on:
       branch: master
+      tags: false
