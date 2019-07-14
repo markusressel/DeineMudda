@@ -6,7 +6,7 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
 
-class CommandArgument:
+class Argument:
 
     def __init__(self, name: str, description: str, example: str, type: type = str, converter: callable = None,
                  default: any = None,
@@ -52,6 +52,28 @@ class CommandArgument:
         Generates the usage text for this argument
         :return: usage text line
         """
+        message = "  {} (`{}`): {}".format(
+            escape_for_markdown(self.name),
+            self.type.__name__,
+            escape_for_markdown(self.description)
+        )
+        if self.default is not None:
+            message += " (default: {}".format(escape_for_markdown(self.default))
+        return message
+
+
+class Selection(Argument):
+    """
+    Convenience class for a command argument based on a predefined selection of allowed values
+    """
+
+    def __init__(self, name: str, description: str, allowed_values: [any], type: type = str, converter: callable = None,
+                 default: any = None):
+        self.allowed_values = allowed_values
+        validator = lambda x: x in self.allowed_values
+        super().__init__(name, description, allowed_values[0], type, converter, default, validator)
+
+    def generate_argument_message(self):
         message = "  {} (`{}`): {}".format(
             escape_for_markdown(self.name),
             self.type.__name__,

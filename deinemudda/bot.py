@@ -9,7 +9,7 @@ from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CH
 from deinemudda.persistence import Persistence, User, Chat
 from deinemudda.response import ResponseManager
 from deinemudda.telegram_command import command, generate_command_list
-from deinemudda.telegram_command.argument import CommandArgument
+from deinemudda.telegram_command.argument import Argument, Selection
 from deinemudda.util import send_message
 
 # dictionary used for antispam-protection, if activated
@@ -33,12 +33,22 @@ class DeineMuddaBot:
                                 use_context=True)
 
         handler_groups = {
-            1: [MessageHandler(Filters.text, self._message_callback),
-                CommandHandler(COMMAND_COMMANDS, self._commands_command_callback),
-                CommandHandler(COMMAND_MUDDA, self._mudda_command_callback),
-                CommandHandler(COMMAND_SET_ANTISPAM, self._set_antispam_command_callback),
-                CommandHandler(COMMAND_SET_CHANCE, self._set_chance_command_callback)],
-            2: [MessageHandler(Filters.group & (~ Filters.reply), self._group_message_callback)]
+            1: [MessageHandler(Filters.text, callback=self._message_callback),
+                CommandHandler(COMMAND_COMMANDS,
+                               filters=(~ Filters.forwarded),
+                               callback=self._commands_command_callback),
+                CommandHandler(COMMAND_MUDDA,
+                               filters=(~ Filters.forwarded),
+                               callback=self._mudda_command_callback),
+                CommandHandler(COMMAND_SET_ANTISPAM,
+                               filters=(~ Filters.forwarded),
+                               callback=self._set_antispam_command_callback),
+                CommandHandler(COMMAND_SET_CHANCE,
+                               filters=(~ Filters.forwarded),
+                               callback=self._set_chance_command_callback)],
+            2: [MessageHandler(
+                filters=Filters.group & (~ Filters.reply) & (~ Filters.forwarded) & (~Filters.update.message),
+                callback=self._group_message_callback)]
         }
 
         for group, handlers in handler_groups.items():
@@ -85,13 +95,14 @@ class DeineMuddaBot:
 
     def _group_message_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
-        chat_id = update.message.chat_id
+        effective_message = update.effective_message
+        chat_id = effective_message.chat_id
         chat_type = update.effective_chat.type
 
         my_id = bot.get_me().id
 
-        if update.message.new_chat_members:
-            for member in update.message.new_chat_members:
+        if effective_message.new_chat_members:
+            for member in effective_message.new_chat_members:
                 if member.id == my_id:
                     LOGGER.debug("Bot was added to group: {}".format(chat_id))
                     chat_entity = Chat(id=chat_id, type=chat_type)
@@ -108,8 +119,8 @@ class DeineMuddaBot:
                     chat.users.append(user_entity)
                     self._persistence.add_or_update_chat(chat)
 
-        if update.message.left_chat_member:
-            member = update.message.left_chat_member
+        if effective_message.left_chat_member:
+            member = effective_message.left_chat_member
             if member.id == my_id:
                 LOGGER.debug("Bot was removed from group: {}".format(chat_id))
                 self._persistence.delete_chat(chat_id)
@@ -121,7 +132,7 @@ class DeineMuddaBot:
 
     def _antispam(self, update: Update, context: CallbackContext, n: int = 30):
         bot = context.bot
-        chat_id = update.message.chat_id
+        chat_id = update.effective_message.chat_id
 
         chat = self._persistence.get_chat(chat_id)
         if chat is None:
@@ -131,34 +142,33 @@ class DeineMuddaBot:
         if anti_spam == "off":
             return False
 
-        user_id = update.message.from_user.id
+        from_user = update.effective_message.from_user
         now = datetime.datetime.now()
 
-        if user_id in spamtracker:
-            difference = now - spamtracker[user_id][0]
+        if from_user.id in spamtracker:
+            difference = now - spamtracker[from_user.id][0]
             if difference < datetime.timedelta(seconds=n):
-                warned = spamtracker[user_id][1]
+                warned = spamtracker[from_user.id][1]
                 if warned:
                     send_message(bot,
-                                 update.message.chat_id,
+                                 chat_id,
                                  parse_mode="HTML",
-                                 message="{}: <b>See ya!</b>".format(update.message.from_user.name))
-                    del spamtracker[user_id]
+                                 message="{}: <b>See ya!</b>".format(from_user.name))
+                    del spamtracker[from_user.id]
                     # print(spamtracker)
-                    kicked = bot.kickChatMember(update.message.chat_id, user_id)
+                    kicked = bot.kickChatMember(chat_id, from_user.id)
                     LOGGER.debug("Kicked: {}".format(kicked))
                 else:
                     send_message(bot,
-                                 update.message.chat_id,
+                                 chat_id,
                                  parse_mode="HTML",
-                                 message="{}: <b>Stop spamming or I will kick you!</b>".format(
-                                     update.message.from_user.name))
-                    new_elem = {user_id: [now, True]}
+                                 message="{}: <b>Stop spamming or I will kick you!</b>".format(from_user.name))
+                    new_elem = {from_user.id: [now, True]}
                     spamtracker.update(new_elem)
                 return True
 
         warned = False
-        new_elem = {user_id: [now, warned]}
+        new_elem = {from_user.id: [now, warned]}
         spamtracker.update(new_elem)
 
         return False
@@ -169,7 +179,7 @@ class DeineMuddaBot:
     )
     def _commands_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
-        chat_id = update.message.chat_id
+        chat_id = update.effective_message.chat_id
         text = generate_command_list()
         send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN)
 
@@ -179,8 +189,8 @@ class DeineMuddaBot:
     )
     def _mudda_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
-        chat_id = update.message.chat_id
-        message_id = update.message.message_id
+        chat_id = update.effective_message.chat_id
+        message_id = update.effective_message.message_id
 
         if self._antispam(update, context):
             LOGGER.debug("Removing message because of spam")
@@ -194,7 +204,7 @@ class DeineMuddaBot:
         name="set_chance",
         description="Set the trigger probability to a specific value.",
         arguments=[
-            CommandArgument(
+            Argument(
                 name="probability",
                 example="0.13",
                 type=float,
@@ -206,8 +216,8 @@ class DeineMuddaBot:
     )
     def _set_chance_command_callback(self, update: Update, context: CallbackContext, probability):
         bot = context.bot
-        chat_id = update.message.chat_id
-        from_user = update.message.from_user
+        chat_id = update.effective_message.chat_id
+        from_user = update.effective_message.from_user
 
         chat_type = update.effective_chat.type
         member = bot.getChatMember(chat_id, from_user.id)
@@ -229,19 +239,18 @@ class DeineMuddaBot:
         name="set_antispam",
         description="Turn antispam feature on/off",
         arguments=[
-            CommandArgument(
+            Selection(
                 name="state",
-                example="on",
                 description="The new state",
-                validator=lambda x: x in ["on", "off"]
+                allowed_values=["on", "off"]
             )
         ]
     )
     def _set_antispam_command_callback(self, update: Update, context: CallbackContext, new_state: str):
         # only run if user is administrator/creator or it's a private chat
         bot = context.bot
-        chat_id = update.message.chat_id
-        from_user = update.message.from_user
+        chat_id = update.effective_message.chat_id
+        from_user = update.effective_message.from_user
         chat_type = update.effective_chat.type
 
         member = bot.getChatMember(chat_id, from_user.id)
