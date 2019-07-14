@@ -3,28 +3,28 @@ python:
   - "3.6"
   # currently not compatible with 3.7
 
-services:
-  - docker
+#services:
+#  - docker
 
 before_install:
   docker build -t markusressel/deinemudda .
-install:
-  - pip install -r requirements.txt
-  - pip install -r test_requirements.txt
+#install:
+#  - pip install -r requirements.txt
+#  - pip install -r test_requirements.txt
 # command to run tests
-script:
-  - nosetests
+#script:
+#  - nosetests
 
 deploy:
   - provider: script
     skip_cleanup: true
-    script: bash docker_push
+    script: bash travis/docker_push
     on:
       branch: master
       tags: true
   - provider: script
     skip_cleanup: true
-    script: bash docker_push_latest
+    script: bash travis/docker_push_latest
     on:
       branch: master
       tags: false
