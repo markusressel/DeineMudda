@@ -45,6 +45,7 @@ class CommandArgument:
         if self.validator is not None:
             if not self.validator(parsed):
                 raise ValueError("Invalid argument value: {}".format(arg))
+        return parsed
 
     def generate_argument_message(self) -> str:
         """

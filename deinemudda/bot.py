@@ -36,8 +36,8 @@ class DeineMuddaBot:
             1: [MessageHandler(Filters.text, self._message_callback),
                 CommandHandler(COMMAND_COMMANDS, self._commands_command_callback),
                 CommandHandler(COMMAND_MUDDA, self._mudda_command_callback),
-                CommandHandler(COMMAND_SET_ANTISPAM, self._set_antispam_command_callback, pass_args=True),
-                CommandHandler(COMMAND_SET_CHANCE, self._set_chance_command_callback, pass_args=True)],
+                CommandHandler(COMMAND_SET_ANTISPAM, self._set_antispam_command_callback),
+                CommandHandler(COMMAND_SET_CHANCE, self._set_chance_command_callback)],
             2: [MessageHandler(Filters.group & (~ Filters.reply), self._group_message_callback)]
         }
 
@@ -200,7 +200,7 @@ class DeineMuddaBot:
                 type=float,
                 converter=lambda x: float(x),
                 description="The probability to set",
-                validator=lambda x: 0 <= x <= 1
+                validator=(lambda x: 0 <= x <= 1)
             )
         ]
     )
@@ -217,15 +217,6 @@ class DeineMuddaBot:
             # TODO: use permission decorator for this
             pass
         else:
-            return
-
-        try:
-
-            # ... and in valid range 0-100
-            if probability < 0 or probability > 1:
-                raise ValueError("Illegal propability value")
-        except ValueError:
-            send_message(bot, chat_id, message="Usage: set_chance <0.00-1.00>")
             return
 
         chat = self._persistence.get_chat(chat_id)

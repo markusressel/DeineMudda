@@ -35,7 +35,7 @@ def parse_telegram_command(text: str) -> (str, [str]):
         return text[1:], []
     else:
         command, rest = text.split(" ", 1)
-        args = text.split(" ")
+        args = rest.split(" ")
         return command[1:], args
 
 
