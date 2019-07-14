@@ -3,13 +3,13 @@ import logging
 
 from telegram import Bot, Update, ParseMode
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackContext
+from telegram_click import command, generate_command_list
+from telegram_click.argument import Argument, Selection
 
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS
 from deinemudda.persistence import Persistence, User, Chat
 from deinemudda.response import ResponseManager
-from deinemudda.telegram_command import command, generate_command_list
-from deinemudda.telegram_command.argument import Argument, Selection
 from deinemudda.util import send_message
 
 # dictionary used for antispam-protection, if activated
@@ -35,17 +35,21 @@ class DeineMuddaBot:
         handler_groups = {
             1: [MessageHandler(Filters.text, callback=self._message_callback),
                 CommandHandler(COMMAND_COMMANDS,
-                               filters=(~ Filters.forwarded) & (~ Filters.reply) & (~Filters.update.message),
+                               filters=(~ Filters.forwarded) & (~ Filters.reply),
                                callback=self._commands_command_callback),
                 CommandHandler(COMMAND_MUDDA,
-                               filters=(~ Filters.forwarded) & (~ Filters.reply) & (~Filters.update.message),
+                               filters=(~ Filters.forwarded) & (~ Filters.reply),
                                callback=self._mudda_command_callback),
                 CommandHandler(COMMAND_SET_ANTISPAM,
-                               filters=(~ Filters.forwarded) & (~ Filters.reply) & (~Filters.update.message),
+                               filters=(~ Filters.forwarded) & (~ Filters.reply),
                                callback=self._set_antispam_command_callback),
                 CommandHandler(COMMAND_SET_CHANCE,
-                               filters=(~ Filters.forwarded) & (~ Filters.reply) & (~Filters.update.message),
-                               callback=self._set_chance_command_callback)],
+                               filters=(~ Filters.forwarded) & (~ Filters.reply),
+                               callback=self._set_chance_command_callback),
+                MessageHandler(filters=Filters.command & ~ Filters.reply,
+                               callback=self._commands_command_callback)
+                ],
+
             2: [MessageHandler(
                 filters=Filters.group & (~ Filters.reply) & (~ Filters.forwarded) & (~Filters.update.message),
                 callback=self._group_message_callback)]
