@@ -1,9 +1,13 @@
+import logging
 import re
 from random import random
 
 from deinemudda import util
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.response.rule import ResponseRule
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
 
 
 class ResponseManager:
@@ -45,7 +49,7 @@ class ResponseManager:
             # TODO: get trigger chance for specific rule based on chat id
             # trigger_chance = int(chat.get_setting("{}-TriggerChance".format(rule.__id__), default="1"))
             trigger_chance = float(chat.get_setting("TriggerChance", default="1"))
-            
+
             if random() >= trigger_chance:
                 # skip rule
                 continue
