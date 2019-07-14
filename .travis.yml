@@ -5,7 +5,10 @@ python:
   - "3.6"
   - "3.7-dev"
   - "nightly" # currently points to 3.7-dev
-# command to install dependencies
+
+
+before_install:
+  docker build -t markusressel/deinemudda .
 install:
   - pip install .
   - pip install -r test_requirements.txt

@@ -1,6 +1,6 @@
 # Docker image for deineMuddaBot
 
-FROM python:2.7
+FROM python:3.6
 #-alpine
 
 WORKDIR /app
@@ -10,9 +10,8 @@ RUN apt-get update
 RUN apt-get install gcc libffi-dev libssl-dev libxml2-dev libxslt-dev
 #RUN python3 -m ensurepip && pip3 install --upgrade pip setuptools
 
-RUN pip install python-telegram-bot==11.1.0
-RUN pip install pattern
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
 
-COPY bot.py ./
-
-CMD python bot.py
+CMD [ "python", "./deinemudda/main.py" ]
