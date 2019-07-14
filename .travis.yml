@@ -3,8 +3,8 @@ python:
   - "3.6"
   # currently not compatible with 3.7
 
-#services:
-#  - docker
+services:
+  - docker
 
 before_install:
   docker build -t markusressel/deinemudda .
