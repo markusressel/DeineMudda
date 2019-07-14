@@ -116,7 +116,7 @@ class DeineMuddaBot:
             else:
                 LOGGER.debug("{} ({}) left group {}".format(member.full_name, member.id, chat_id))
                 chat = self._persistence.get_chat(chat_id)
-                chat.users = filter(lambda x: x.id != member.id, chat.users)
+                chat.users = list(filter(lambda x: x.id != member.id, chat.users))
                 self._persistence.add_or_update_chat(chat)
 
     def _antispam(self, update: Update, context: CallbackContext, n: int = 30):
