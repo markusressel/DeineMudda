@@ -11,7 +11,7 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install -r test_requirements.txt
-  command to run tests
+  # command to run tests
 script:
   - nosetests
 
