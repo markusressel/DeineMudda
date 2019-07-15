@@ -119,12 +119,16 @@ class DeineMuddaBot:
         chat_type = update.effective_chat.type
 
         chat = self._persistence.get_chat(chat_id)
+        from_user = update.effective_message.from_user
         if chat is None:
             # make sure we know about this chat in persistence
             chat = Chat(id=chat_id, type=chat_type)
             chat.set_setting(SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT)
             chat.set_setting(SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_TRIGGER_PROBABILITY_DEFAULT)
             self._persistence.add_or_update_chat(chat)
+
+        # remember chat user
+        self._persistence.add_or_update_chat_member(chat, from_user)
 
     @MESSAGE_TIME.time()
     def _message_callback(self, update: Update, context: CallbackContext):
@@ -133,9 +137,6 @@ class DeineMuddaBot:
 
         from_user = update.message.from_user
         chat = self._persistence.get_chat(chat_id)
-
-        # remember chat user
-        self._persistence.add_or_update_chat_member(chat, from_user)
 
         response_message = self._response_manager.find_matching_rule(chat, from_user.first_name, update.message.text)
         if response_message:
@@ -194,18 +195,16 @@ class DeineMuddaBot:
             if difference < datetime.timedelta(seconds=n):
                 warned = spamtracker[from_user.id][1]
                 if warned:
-                    send_message(bot,
-                                 chat_id,
-                                 parse_mode="HTML",
-                                 message="{}: <b>See ya!</b>".format(from_user.name))
-                    del spamtracker[from_user.id]
-                    # print(spamtracker)
-                    kicked = bot.kickChatMember(chat_id, from_user.id)
-                    LOGGER.debug("Kicked: {}".format(kicked))
+                    try:
+                        kicked = bot.kickChatMember(chat_id, from_user.id)
+                        del spamtracker[from_user.id]
+                        LOGGER.debug("Kicked: {}".format(kicked))
+                    except Exception as ex:
+                        LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
                 else:
                     send_message(bot,
                                  chat_id,
-                                 parse_mode="HTML",
+                                 parse_mode=ParseMode.HTML,
                                  message="{}: <b>Stop spamming or I will kick you!</b>".format(from_user.name))
                     new_elem = {from_user.id: [now, True]}
                     spamtracker.update(new_elem)
@@ -258,8 +257,11 @@ class DeineMuddaBot:
         message_id = update.effective_message.message_id
 
         if self._antispam(update, context):
-            LOGGER.debug("Removing message because of spam")
-            bot.delete_message(chat_id=chat_id, message_id=message_id)
+            try:
+                LOGGER.debug("Trying to removing message {} in chat {} because of spam".format(message_id, chat_id))
+                bot.delete_message(chat_id=chat_id, message_id=message_id)
+            except Exception as ex:
+                LOGGER.debug("Couldn't remove message: {}".format(ex))
             return
 
         text = "deine mudda"
