@@ -22,10 +22,10 @@ from telegram_click import command, generate_command_list
 from telegram_click.argument import Argument, Selection
 
 from deinemudda.config import AppConfig
-from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS
+from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.response import ResponseManager
-from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT
+from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT, format_metrics
 from deinemudda.util import send_message
 
 # dictionary used for antispam-protection, if activated
@@ -50,6 +50,9 @@ class DeineMuddaBot:
                 CommandHandler(COMMAND_COMMANDS,
                                filters=(~ Filters.forwarded) & (~ Filters.reply),
                                callback=self._commands_command_callback),
+                CommandHandler(COMMAND_STATS,
+                               filters=(~ Filters.forwarded) & (~ Filters.reply),
+                               callback=self._stats_command_callback),
                 CommandHandler(COMMAND_MUDDA,
                                filters=(~ Filters.forwarded) & (~ Filters.reply),
                                callback=self._mudda_command_callback),
@@ -198,6 +201,24 @@ class DeineMuddaBot:
         chat_id = update.effective_message.chat_id
         text = generate_command_list()
         send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN)
+
+    @command(
+        name="stats",
+        description="List bot statistics."
+    )
+    def _stats_command_callback(self, update: Update, context: CallbackContext) -> None:
+        """
+        /stats command handler
+        :param update: the chat update object
+        :param context: telegram context
+        """
+        bot = context.bot
+        message = update.effective_message
+        chat_id = update.effective_chat.id
+
+        text = format_metrics()
+
+        send_message(bot, chat_id, text, reply_to=message.message_id)
 
     @command(
         name="mudda",

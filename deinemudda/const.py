@@ -24,6 +24,7 @@ CONFIG_NODE_PORT = "port"
 DEFAULT_SQL_PERSISTENCE_URL = "sqlite:///deinemudda.db"
 
 COMMAND_COMMANDS = 'commands'
+COMMAND_STATS = 'stats'
 COMMAND_MUDDA = 'mudda'
 COMMAND_SET_ANTISPAM = 'set_antispam'
 COMMAND_SET_CHANCE = 'set_chance'
