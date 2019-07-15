@@ -108,10 +108,15 @@ class DeineMuddaBot:
     @MESSAGE_TIME.time()
     def _message_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
-        chat_id = update.message.chat_id
+        chat_id = update.effective_message.chat_id
+        chat_type = update.effective_chat.type
 
         from_user = update.message.from_user
         chat = self._persistence.get_chat(chat_id)
+
+        if chat is None:
+            chat = Chat(id=chat_id, type=chat_type)
+            self._persistence.add_or_update_chat(chat)
 
         # remember chat user
         self._persistence.add_or_update_chat_member(chat, from_user)
