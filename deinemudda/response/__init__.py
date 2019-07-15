@@ -71,8 +71,10 @@ class ResponseManager:
                 continue
 
             if response_rule.matches(message):
-                RESPONSES_COUNT.labels(chat_id=chat.id, rule=response_rule.__id__).inc()
-                return response_rule.get_response(chat, sender, normalized_message)
+                response = response_rule.get_response(chat, sender, normalized_message)
+                if response:
+                    RESPONSES_COUNT.labels(chat_id=chat.id, rule=response_rule.__id__).inc()
+                    return response
 
     @staticmethod
     def _normalize(message: str):
