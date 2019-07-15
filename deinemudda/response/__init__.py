@@ -5,6 +5,7 @@ from random import random
 from deinemudda import util
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.response.rule import ResponseRule
+from deinemudda.stats import RESPONSES_COUNT
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -29,7 +30,7 @@ class ResponseManager:
         rule_instances = list(map(lambda x: x(self._persistence), rule_classes))
         return sorted(rule_instances, key=lambda x: x.__priority__, reverse=True)
 
-    def process_message(self, chat: Chat, sender: str, message: str) -> str or None:
+    def find_matching_rule(self, chat: Chat, sender: str, message: str) -> ResponseRule or None:
         """
         Processes the given message and returns a response if one of the response rules match
         :param chat: the chat this message was sent in
@@ -45,17 +46,18 @@ class ResponseManager:
         from pattern import text
         parsed = text.parse(normalized_message, relations=True, lemmata=True)
 
-        for rule in self.response_rules:
+        for response_rule in self.response_rules:
             # TODO: get trigger chance for specific rule based on chat id
-            # trigger_chance = int(chat.get_setting("{}-TriggerChance".format(rule.__id__), default="1"))
+            # trigger_chance = int(chat.get_setting("{}-TriggerChance".format(response_rule.__id__), default="1"))
             trigger_chance = float(chat.get_setting("TriggerChance", default="1"))
 
             if random() >= trigger_chance:
                 # skip rule
                 continue
 
-            if rule.matches(message):
-                return rule.get_response(chat, sender, normalized_message)
+            if response_rule.matches(message):
+                RESPONSES_COUNT.labels(chat_id=chat.id, rule=response_rule.__id__).inc()
+                return response_rule.get_response(chat, sender, normalized_message)
 
     @staticmethod
     def _normalize(message: str):

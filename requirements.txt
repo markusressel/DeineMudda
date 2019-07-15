@@ -5,3 +5,4 @@ pattern
 emoji
 sqlalchemy
 alembic
+prometheus-client

@@ -3,6 +3,9 @@ CONFIG_NODE_TELEGRAM = "telegram"
 
 CONFIG_NODE_PERSISTENCE = "persistence"
 
+CONFIG_NODE_STATS = "stats"
+CONFIG_NODE_PORT = "port"
+
 DEFAULT_SQL_PERSISTENCE_URL = "sqlite:///deinemudda.db"
 
 COMMAND_COMMANDS = 'commands'

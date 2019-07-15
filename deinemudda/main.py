@@ -12,11 +12,17 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
+    from prometheus_client import start_http_server
     from deinemudda.bot import DeineMuddaBot
     from deinemudda.config import AppConfig
     from deinemudda.persistence import Persistence
 
     config = AppConfig()
+
+    # start prometheus server
+    start_http_server(config.STATS_PORT.value)
+
     persistence = Persistence(config)
     bot = DeineMuddaBot(config, persistence)
+
     bot.start()

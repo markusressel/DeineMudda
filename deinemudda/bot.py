@@ -10,13 +10,11 @@ from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS
 from deinemudda.persistence import Persistence, User, Chat
 from deinemudda.response import ResponseManager
+from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT
 from deinemudda.util import send_message
 
 # dictionary used for antispam-protection, if activated
 spamtracker = {}
-
-# dictionary used to store last message per chat
-last_message = {}
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -85,17 +83,19 @@ class DeineMuddaBot:
                      parse_mode=ParseMode.HTML,
                      reply_to=reply_to_message_id)
 
+    @MESSAGE_TIME.time()
     def _message_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
         chat_id = update.message.chat_id
-        last_message.update({chat_id: update.message.text})
 
         from_user = update.message.from_user
         chat = self._persistence.get_chat(chat_id)
 
-        response_message = self._response_manager.process_message(chat, from_user.first_name, update.message.text)
+        response_message = self._response_manager.find_matching_rule(chat, from_user.first_name, update.message.text)
         if response_message:
             self._shout(bot, update.message, response_message)
+
+        MESSAGES_COUNT.labels(chat_id=chat_id).inc()
 
     def _group_message_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
