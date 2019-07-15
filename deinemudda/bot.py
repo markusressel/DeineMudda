@@ -21,7 +21,7 @@ from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, Callb
 from telegram_click import generate_command_list
 from telegram_click.argument import Argument, Selection
 from telegram_click.decorator import command
-from telegram_click.permission import GROUP_ADMIN
+from telegram_click.permission import GROUP_ADMIN, PRIVATE_CHAT
 
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS, \
@@ -218,20 +218,19 @@ class DeineMuddaBot:
 
     @command(
         name=COMMAND_COMMANDS,
-        description="List commands supported by this bot."
+        description="List commands supported by this bot.",
+        permissions=PRIVATE_CHAT | GROUP_ADMIN
     )
     def _commands_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
         chat_id = update.effective_message.chat_id
-        text = generate_command_list()
+        text = generate_command_list(update, context)
         send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN)
 
     @command(
         name=COMMAND_STATS,
         description="List bot statistics.",
-        permissions=[
-            GROUP_ADMIN
-        ]
+        permissions=PRIVATE_CHAT | GROUP_ADMIN
     )
     def _stats_command_callback(self, update: Update, context: CallbackContext) -> None:
         """
@@ -249,7 +248,8 @@ class DeineMuddaBot:
 
     @command(
         name=COMMAND_MUDDA,
-        description="Trigger the bot manually."
+        description="Trigger the bot manually.",
+        permissions=PRIVATE_CHAT | GROUP_ADMIN
     )
     def _mudda_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
@@ -269,7 +269,8 @@ class DeineMuddaBot:
 
     @command(
         name=COMMAND_GET_SETTINGS,
-        description="Show settings for the current chat."
+        description="Show settings for the current chat.",
+        permissions=PRIVATE_CHAT | GROUP_ADMIN
     )
     def _get_settings_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
@@ -302,9 +303,7 @@ class DeineMuddaBot:
                 validator=(lambda x: 0 <= x <= 1)
             )
         ],
-        permissions=[
-            GROUP_ADMIN
-        ]
+        permissions=PRIVATE_CHAT | GROUP_ADMIN
     )
     def _set_chance_command_callback(self, update: Update, context: CallbackContext, probability):
         bot = context.bot
@@ -326,9 +325,7 @@ class DeineMuddaBot:
                 allowed_values=["on", "off"]
             )
         ],
-        permissions=[
-            GROUP_ADMIN
-        ]
+        permissions=PRIVATE_CHAT | GROUP_ADMIN
     )
     def _set_antispam_command_callback(self, update: Update, context: CallbackContext, new_state: str):
         bot = context.bot
