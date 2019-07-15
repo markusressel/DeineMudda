@@ -22,7 +22,8 @@ from telegram_click import command, generate_command_list
 from telegram_click.argument import Argument, Selection
 
 from deinemudda.config import AppConfig
-from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS
+from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS, \
+    COMMAND_GET_SETTINGS
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.response import ResponseManager
 from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT, format_metrics
@@ -56,6 +57,9 @@ class DeineMuddaBot:
                 CommandHandler(COMMAND_MUDDA,
                                filters=(~ Filters.forwarded) & (~ Filters.reply),
                                callback=self._mudda_command_callback),
+                CommandHandler(COMMAND_GET_SETTINGS,
+                               filters=(~ Filters.forwarded) & (~ Filters.reply),
+                               callback=self._get_settings_command_callback),
                 CommandHandler(COMMAND_SET_ANTISPAM,
                                filters=(~ Filters.forwarded) & (~ Filters.reply),
                                callback=self._set_antispam_command_callback),
@@ -193,7 +197,7 @@ class DeineMuddaBot:
         return False
 
     @command(
-        name="commands",
+        name=COMMAND_COMMANDS,
         description="List commands supported by this bot."
     )
     def _commands_command_callback(self, update: Update, context: CallbackContext):
@@ -203,7 +207,7 @@ class DeineMuddaBot:
         send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN)
 
     @command(
-        name="stats",
+        name=COMMAND_STATS,
         description="List bot statistics."
     )
     def _stats_command_callback(self, update: Update, context: CallbackContext) -> None:
@@ -221,7 +225,7 @@ class DeineMuddaBot:
         send_message(bot, chat_id, text, reply_to=message.message_id)
 
     @command(
-        name="mudda",
+        name=COMMAND_MUDDA,
         description="Trigger the bot manually."
     )
     def _mudda_command_callback(self, update: Update, context: CallbackContext):
@@ -238,7 +242,29 @@ class DeineMuddaBot:
         self._shout(bot, update.message, text, reply=False)
 
     @command(
-        name="set_chance",
+        name=COMMAND_GET_SETTINGS,
+        description="Show settings for the current chat."
+    )
+    def _get_settings_command_callback(self, update: Update, context: CallbackContext):
+        bot = context.bot
+        chat_id = update.effective_message.chat_id
+        message_id = update.effective_message.message_id
+
+        chat = self._persistence.get_chat(chat_id)
+
+        lines = []
+        for setting in chat.settings:
+            lines.append("{}: {}".format(setting.key, setting.value))
+
+        message = "\n".join(lines)
+        if message:
+            send_message(bot, chat_id, message)
+        else:
+            # TODO: would be better if this could display default values to give at least some information
+            send_message(bot, chat_id, "No chat specific settings set")
+
+    @command(
+        name=COMMAND_SET_CHANCE,
         description="Set the trigger probability to a specific value.",
         arguments=[
             Argument(
@@ -273,7 +299,7 @@ class DeineMuddaBot:
         send_message(bot, chat_id, message="TriggerChance: {}%".format(probability * 100))
 
     @command(
-        name="set_antispam",
+        name=COMMAND_SET_ANTISPAM,
         description="Turn antispam feature on/off",
         arguments=[
             Selection(
