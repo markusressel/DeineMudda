@@ -2,6 +2,19 @@
 
 Nee, deine Mudda!
 
+# Configuration
+
+DeineMudda uses [container-app-conf](https://github.com/markusressel/container-app-conf)
+for configuration. Check out [deinemudda_example.yaml](https://github.com/markusressel/DeineMudda/blob/master/deinemudda_example.yaml)
+to see what the **YAML** config would look like.
+
+| Name                               | Description                              | Type     | Default                                |
+|------------------------------------|------------------------------------------|----------|----------------------------------------|
+| `DEINEMUDDA_TELEGRAM_BOT_TOKEN`    | The bot token used to authenticate the bot with telegram | `str` | `-` |
+| `DEINEMUDDA_PERSISTENCE_URL`       | SQLAlchemy connection URL | `str` | `sqlite:///deinemudda.db` |
+| `DEINEMUDDA_STATS_PORT`            | Prometheus statistics port | `int` | `8000` |
+
+
 # Developer docs
 
 ## Setup
