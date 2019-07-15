@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, ForeignKey, String, Table
+from sqlalchemy import Column, Integer, ForeignKey, String, Table, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from deinemudda.persistence.entity import Base
@@ -24,12 +24,13 @@ class Setting(Base):
     Data model of chat specific settings
     """
     __tablename__ = 'settings'
+    __table_args__ = (UniqueConstraint('chat_id', 'key', name='_setting_key_uc'),)
 
     id = Column(Integer, primary_key=True)
     chat_id = Column(Integer, ForeignKey('chats.id'))
     chat = relationship("Chat", back_populates="settings")
 
-    key = Column(String, unique=True, index=True)
+    key = Column(String, index=True)
     value = Column(String)
 
 

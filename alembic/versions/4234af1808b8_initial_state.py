@@ -1,15 +1,15 @@
 """initial state
 
-Revision ID: f12a976de614
+Revision ID: 4234af1808b8
 Revises: 
-Create Date: 2019-07-13 21:22:35.705892
+Create Date: 2019-07-15 20:35:27.070358
 
 """
 import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = 'f12a976de614'
+revision = '4234af1808b8'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -41,9 +41,10 @@ def upgrade():
                     sa.Column('key', sa.String(), nullable=True),
                     sa.Column('value', sa.String(), nullable=True),
                     sa.ForeignKeyConstraint(['chat_id'], ['chats.id'], ),
-                    sa.PrimaryKeyConstraint('id')
+                    sa.PrimaryKeyConstraint('id'),
+                    sa.UniqueConstraint('chat_id', 'key', name='_setting_key_uc')
                     )
-    op.create_index(op.f('ix_settings_key'), 'settings', ['key'], unique=True)
+    op.create_index(op.f('ix_settings_key'), 'settings', ['key'], unique=False)
     # ### end Alembic commands ###
 
 
