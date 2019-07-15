@@ -1,4 +1,4 @@
-# DeineMudda
+# DeineMudda [![Build Status](https://travis-ci.org/markusressel/DeineMudda.svg?branch=master)](https://travis-ci.org/markusressel/DeineMudda)
 
 Nee, deine Mudda!
 
