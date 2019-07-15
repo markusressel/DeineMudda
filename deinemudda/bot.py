@@ -18,8 +18,10 @@ import logging
 
 from telegram import Bot, Update, ParseMode
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackContext
-from telegram_click import command, generate_command_list
+from telegram_click import generate_command_list
 from telegram_click.argument import Argument, Selection
+from telegram_click.decorator import command
+from telegram_click.permission import GROUP_ADMIN
 
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS, \
@@ -213,7 +215,10 @@ class DeineMuddaBot:
 
     @command(
         name=COMMAND_STATS,
-        description="List bot statistics."
+        description="List bot statistics.",
+        permissions=[
+            GROUP_ADMIN
+        ]
     )
     def _stats_command_callback(self, update: Update, context: CallbackContext) -> None:
         """
@@ -280,22 +285,14 @@ class DeineMuddaBot:
                 description="The probability to set",
                 validator=(lambda x: 0 <= x <= 1)
             )
+        ],
+        permissions=[
+            GROUP_ADMIN
         ]
     )
     def _set_chance_command_callback(self, update: Update, context: CallbackContext, probability):
         bot = context.bot
         chat_id = update.effective_message.chat_id
-        from_user = update.effective_message.from_user
-
-        chat_type = update.effective_chat.type
-        member = bot.getChatMember(chat_id, from_user.id)
-
-        # only run if user is administrator/creator or it's a private chat
-        if chat_type == 'private' or member.status == "administrator" or member.status == "creator":
-            # TODO: use permission decorator for this
-            pass
-        else:
-            return
 
         chat = self._persistence.get_chat(chat_id)
         chat.set_setting("TriggerChance", str(probability))
@@ -312,21 +309,14 @@ class DeineMuddaBot:
                 description="The new state",
                 allowed_values=["on", "off"]
             )
+        ],
+        permissions=[
+            GROUP_ADMIN
         ]
     )
     def _set_antispam_command_callback(self, update: Update, context: CallbackContext, new_state: str):
-        # only run if user is administrator/creator or it's a private chat
         bot = context.bot
         chat_id = update.effective_message.chat_id
-        from_user = update.effective_message.from_user
-        chat_type = update.effective_chat.type
-
-        member = bot.getChatMember(chat_id, from_user.id)
-        if chat_type == 'private' or member.status == "administrator" or member.status == "creator":
-            # TODO: use permission decorator for this
-            pass
-        else:
-            return
 
         chat = self._persistence.get_chat(chat_id)
         chat.set_setting("antispam", new_state)

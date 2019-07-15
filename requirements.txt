@@ -1,6 +1,6 @@
 container-app-conf==1.0.0
 python-telegram-bot==12.0.0b1
-telegram-click
+telegram-click==2.0.1
 pattern
 emoji
 sqlalchemy
