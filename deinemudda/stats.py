@@ -27,6 +27,10 @@ ENTITIES_COUNT = Gauge('entities_count',
                        'Number of entities with the given type',
                        ['type'])
 
+USERS_IN_CHAT_COUNT = Gauge('users_in_chat',
+                            'Number of user entities within the given chat',
+                            ['chat_id'])
+
 MESSAGE_TIME = Summary('message_processing_seconds', 'Time spent in the messages handler')
 
 

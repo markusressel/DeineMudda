@@ -23,7 +23,7 @@ from telegram_click.argument import Argument, Selection
 
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS
-from deinemudda.persistence import Persistence, User, Chat
+from deinemudda.persistence import Persistence, Chat
 from deinemudda.response import ResponseManager
 from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT
 from deinemudda.util import send_message
@@ -64,7 +64,7 @@ class DeineMuddaBot:
                 ],
 
             2: [MessageHandler(
-                filters=Filters.group & (~ Filters.reply) & (~ Filters.forwarded) & (~Filters.update.message),
+                filters=Filters.group & (~ Filters.reply) & (~ Filters.forwarded),
                 callback=self._group_message_callback)]
         }
 
@@ -106,6 +106,9 @@ class DeineMuddaBot:
         from_user = update.message.from_user
         chat = self._persistence.get_chat(chat_id)
 
+        # remember chat user
+        self._persistence.add_or_update_chat_member(chat, from_user)
+
         response_message = self._response_manager.find_matching_rule(chat, from_user.first_name, update.message.text)
         if response_message:
             self._shout(bot, update.message, response_message)
@@ -129,14 +132,8 @@ class DeineMuddaBot:
                 else:
                     LOGGER.debug("{} ({}) joined group {}".format(member.full_name, member.id, chat_id))
                     chat = self._persistence.get_chat(chat_id)
-                    user_entity = User(
-                        id=member.id,
-                        first_name=member.first_name,
-                        full_name=member.full_name,
-                        username=member.username
-                    )
-                    chat.users.append(user_entity)
-                    self._persistence.add_or_update_chat(chat)
+                    # remember chat user
+                    self._persistence.add_or_update_chat_member(chat, member)
 
         if effective_message.left_chat_member:
             member = effective_message.left_chat_member

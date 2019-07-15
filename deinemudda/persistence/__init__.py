@@ -22,7 +22,7 @@ from sqlalchemy.util.compat import contextmanager
 from deinemudda.config import AppConfig
 from deinemudda.persistence.entity.chat import Chat
 from deinemudda.persistence.entity.user import User
-from deinemudda.stats import ENTITIES_COUNT
+from deinemudda.stats import ENTITIES_COUNT, USERS_IN_CHAT_COUNT
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -72,8 +72,22 @@ class Persistence:
 
     def add_or_update_chat(self, chat: Chat) -> None:
         with self._session_scope(write=True) as session:
-            session.add(chat)
+            session.merge(chat)
         self._update_stats()
+
+    def add_or_update_chat_member(self, chat: Chat, user: User) -> None:
+        user_entity = User(
+            id=user.id,
+            first_name=user.first_name,
+            full_name=user.full_name,
+            username=user.username
+        )
+        # remove old data
+        chat.users = list(filter(lambda x: x.id != user_entity.id, chat.users))
+        # add new
+        chat.users.append(user_entity)
+        # save
+        self.add_or_update_chat(chat)
 
     def delete_chat(self, entity_id: int) -> None:
         with self._session_scope(write=True) as session:
@@ -103,3 +117,7 @@ class Persistence:
 
             ENTITIES_COUNT.labels(type='chat').set(chat_count)
             ENTITIES_COUNT.labels(type='user').set(user_count)
+
+            chats = session.query(Chat).all()
+            for chat in chats:
+                USERS_IN_CHAT_COUNT.labels(chat_id=chat.id).set(len(chat.users))
