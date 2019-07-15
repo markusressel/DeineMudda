@@ -18,6 +18,7 @@ import re
 from random import random
 
 from deinemudda import util
+from deinemudda.const import SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_TRIGGER_PROBABILITY_DEFAULT
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.response.rule import ResponseRule
 from deinemudda.stats import RESPONSES_COUNT
@@ -64,7 +65,8 @@ class ResponseManager:
         for response_rule in self.response_rules:
             # TODO: get trigger chance for specific rule based on chat id
             # trigger_chance = int(chat.get_setting("{}-TriggerChance".format(response_rule.__id__), default="1"))
-            trigger_chance = float(chat.get_setting("TriggerChance", default="1"))
+            trigger_chance = float(chat.get_setting(SETTINGS_TRIGGER_PROBABILITY_KEY,
+                                                    default=SETTINGS_TRIGGER_PROBABILITY_DEFAULT))
 
             if random() >= trigger_chance:
                 # skip rule

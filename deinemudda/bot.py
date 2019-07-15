@@ -25,7 +25,8 @@ from telegram_click.permission import GROUP_ADMIN
 
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS, \
-    COMMAND_GET_SETTINGS
+    COMMAND_GET_SETTINGS, SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_ANTISPAM_ENABLED_KEY, \
+    SETTINGS_ANTISPAM_ENABLED_DEFAULT, SETTINGS_TRIGGER_PROBABILITY_DEFAULT
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.response import ResponseManager
 from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT, format_metrics
@@ -49,32 +50,38 @@ class DeineMuddaBot:
                                 use_context=True)
 
         handler_groups = {
+            0: [MessageHandler(filters=None, callback=self._any_message_callback)],
             1: [MessageHandler(Filters.text, callback=self._message_callback),
-                CommandHandler(COMMAND_COMMANDS,
-                               filters=(~ Filters.forwarded) & (~ Filters.reply),
-                               callback=self._commands_command_callback),
-                CommandHandler(COMMAND_STATS,
-                               filters=(~ Filters.forwarded) & (~ Filters.reply),
-                               callback=self._stats_command_callback),
-                CommandHandler(COMMAND_MUDDA,
-                               filters=(~ Filters.forwarded) & (~ Filters.reply),
-                               callback=self._mudda_command_callback),
-                CommandHandler(COMMAND_GET_SETTINGS,
-                               filters=(~ Filters.forwarded) & (~ Filters.reply),
-                               callback=self._get_settings_command_callback),
-                CommandHandler(COMMAND_SET_ANTISPAM,
-                               filters=(~ Filters.forwarded) & (~ Filters.reply),
-                               callback=self._set_antispam_command_callback),
-                CommandHandler(COMMAND_SET_CHANCE,
-                               filters=(~ Filters.forwarded) & (~ Filters.reply),
-                               callback=self._set_chance_command_callback),
-                MessageHandler(filters=Filters.command & ~ Filters.reply,
-                               callback=self._commands_command_callback)
-                ],
-
+                CommandHandler(
+                    COMMAND_COMMANDS,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._commands_command_callback),
+                CommandHandler(
+                    COMMAND_STATS,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._stats_command_callback),
+                CommandHandler(
+                    COMMAND_MUDDA,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._mudda_command_callback),
+                CommandHandler(
+                    COMMAND_GET_SETTINGS,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._get_settings_command_callback),
+                CommandHandler(
+                    COMMAND_SET_ANTISPAM,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._set_antispam_command_callback),
+                CommandHandler(
+                    COMMAND_SET_CHANCE,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._set_chance_command_callback),
+                MessageHandler(
+                    filters=Filters.command & ~ Filters.reply,
+                    callback=self._commands_command_callback)],
             2: [MessageHandler(
                 filters=Filters.group & (~ Filters.reply) & (~ Filters.forwarded),
-                callback=self._group_message_callback)]
+                callback=self._group_message_callback)],
         }
 
         for group, handlers in handler_groups.items():
@@ -107,18 +114,25 @@ class DeineMuddaBot:
                      parse_mode=ParseMode.HTML,
                      reply_to=reply_to_message_id)
 
+    def _any_message_callback(self, update: Update, context: CallbackContext):
+        chat_id = update.effective_message.chat_id
+        chat_type = update.effective_chat.type
+
+        chat = self._persistence.get_chat(chat_id)
+        if chat is None:
+            # make sure we know about this chat in persistence
+            chat = Chat(id=chat_id, type=chat_type)
+            chat.set_setting(SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT)
+            chat.set_setting(SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_TRIGGER_PROBABILITY_DEFAULT)
+            self._persistence.add_or_update_chat(chat)
+
     @MESSAGE_TIME.time()
     def _message_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
         chat_id = update.effective_message.chat_id
-        chat_type = update.effective_chat.type
 
         from_user = update.message.from_user
         chat = self._persistence.get_chat(chat_id)
-
-        if chat is None:
-            chat = Chat(id=chat_id, type=chat_type)
-            self._persistence.add_or_update_chat(chat)
 
         # remember chat user
         self._persistence.add_or_update_chat_member(chat, from_user)
@@ -167,7 +181,7 @@ class DeineMuddaBot:
         chat = self._persistence.get_chat(chat_id)
         if chat is None:
             return
-        anti_spam = chat.get_setting("antispam", "on")
+        anti_spam = chat.get_setting(SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT)
 
         if anti_spam == "off":
             return False
@@ -295,7 +309,7 @@ class DeineMuddaBot:
         chat_id = update.effective_message.chat_id
 
         chat = self._persistence.get_chat(chat_id)
-        chat.set_setting("TriggerChance", str(probability))
+        chat.set_setting(SETTINGS_TRIGGER_PROBABILITY_KEY, str(probability))
         self._persistence.add_or_update_chat(chat)
 
         send_message(bot, chat_id, message="TriggerChance: {}%".format(probability * 100))
@@ -319,7 +333,7 @@ class DeineMuddaBot:
         chat_id = update.effective_message.chat_id
 
         chat = self._persistence.get_chat(chat_id)
-        chat.set_setting("antispam", new_state)
+        chat.set_setting(SETTINGS_ANTISPAM_ENABLED_KEY, new_state)
         self._persistence.add_or_update_chat(chat)
 
         send_message(bot, chat_id, message="Antispam: {}".format(new_state))
