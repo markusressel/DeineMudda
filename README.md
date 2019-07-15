@@ -23,7 +23,7 @@ python3 ./deinemudda/main.py
 
 # Attributions
 
-Thx to @njamster for coming up with the idea and first working version
+Thx to [@njamster](https://github.com/njamster) for coming up with the idea and first working version
 of this bot.
 
 # Contributing
