@@ -24,10 +24,10 @@ class GenitiveRule(ResponseRule):
     __id__ = "GenitiveRule"
     __description__ = "Respond to 'wessen' questions in german"
 
-    def matches(self, message: str):
-        return re.search(r"(^| )(wessen)(| (.)+)", message, re.IGNORECASE)
+    def matches(self, message: str) -> bool:
+        return re.search(r"(^| )(wessen)(| (.)+)", message, re.IGNORECASE) is not None
 
-    def get_response(self, chat: Chat, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
             chat = self._persistence.get_chat(chat.id)
             user = choice(chat.users)
@@ -40,10 +40,10 @@ class DativRule(ResponseRule):
     __id__ = "DativRule"
     __description__ = "Respond to 'wem' questions in german"
 
-    def matches(self, message: str):
-        return re.search(r"(^| )(wem)(| (.)+)", message, re.IGNORECASE)
+    def matches(self, message: str) -> bool:
+        return re.search(r"(^| )(wem)(| (.)+)", message, re.IGNORECASE) is not None
 
-    def get_response(self, chat: Chat, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
             chat = self._persistence.get_chat(chat.id)
             user = choice(chat.users)
@@ -56,10 +56,10 @@ class WhoGermanRule(ResponseRule):
     __id__ = "WhoGermanRule"
     __description__ = "Respond to 'who' questions in german"
 
-    def matches(self, message: str):
-        return re.search(r"(^| )(irgend)?(wer|jemand)(| (.)+)\?", message, re.IGNORECASE)
+    def matches(self, message: str) -> bool:
+        return re.search(r"(^| )(irgend)?(wer|jemand)(| (.)+)\?", message, re.IGNORECASE) is not None
 
-    def get_response(self, chat: Chat, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
             chat = self._persistence.get_chat(chat.id)
             user = choice(chat.users)
@@ -72,10 +72,10 @@ class WhoEnglishRule(ResponseRule):
     __id__ = "WhoEnglishRule"
     __description__ = "Respond to 'who' questions in english"
 
-    def matches(self, message: str):
-        return re.search(r"who(| (.)+)\?", message, re.IGNORECASE)
+    def matches(self, message: str) -> bool:
+        return re.search(r"who(| (.)+)\?", message, re.IGNORECASE) is not None
 
-    def get_response(self, chat: Chat, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         return 'your momma'
 
 
@@ -83,10 +83,10 @@ class WhyRule(ResponseRule):
     __id__ = "WhyRule"
     __description__ = "Respond to 'why' questions"
 
-    def matches(self, message: str):
-        return re.search(r"(^| )(warum|wieso|weshalb|weswegen|why)(| (.)+)", message, re.IGNORECASE)
+    def matches(self, message: str) -> bool:
+        return re.search(r"(^| )(warum|wieso|weshalb|weswegen|why)(| (.)+)", message, re.IGNORECASE) is not None
 
-    def get_response(self, chat: Chat, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         return 'sex'
 
 
@@ -96,10 +96,10 @@ class ReflectCounterIntelligenceRule(ResponseRule):
 
     regex = r"^dei(ne)? (mudda|mutter|mama)"
 
-    def matches(self, message: str):
-        return re.search(self.regex, message, re.IGNORECASE)
+    def matches(self, message: str) -> bool:
+        return re.search(self.regex, message, re.IGNORECASE) is not None
 
-    def get_response(self, chat: Chat, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         hit = re.search(self.regex, message, re.IGNORECASE)
         return "nee, {}".format(hit.group(0))
 
@@ -108,21 +108,25 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
     __id__ = "AdjectiveCounterIntelligenceRule"
     __description__ = "Adjective counter intelligence"
 
-    def matches(self, message: str):
+    def matches(self, message: str) -> bool:
         # we need to do the parsetreecalculation anyway so
         # there is no need to check this first
         return True
 
-    def get_response(self, chat: Chat, sender: int, message: str):
+    def get_response(self, chat: Chat, sender: int, message: str) -> str or None:
         from pattern.text.search import search
         from pattern.text.de import parsetree
         message_tree = parsetree(message, relations=True)
         for match in search('ADJP', message_tree):
             word = match.constituents()[-1].string
 
-            if randint(0, 3) == 3:
+            dice = randint(0, 2)
+
+            if dice == 0:
                 chat = self._persistence.get_chat(chat.id)
                 user = choice(chat.users)
                 return "{}'s mudda is' {}".format(user.first_name, word)
+            elif dice == 1:
+                return "wie deine mudda beim kacken"
             else:
                 return "deine mudda is' {}".format(word)

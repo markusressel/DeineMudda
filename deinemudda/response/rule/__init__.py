@@ -44,9 +44,9 @@ class ResponseRule:
         return 0.0
 
     @abstractmethod
-    def matches(self, message: str):
+    def matches(self, message: str) -> bool:
         raise NotImplementedError()
 
     @abstractmethod
-    def get_response(self, chat: Chat, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         raise NotImplementedError()

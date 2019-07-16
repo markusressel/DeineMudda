@@ -25,10 +25,10 @@ class SpongebobRule(ResponseRule):
     __description__ = "Spongebob easter egg"
     __priority__ = 100.0
 
-    def matches(self, message: str):
-        return re.search(r"^wer wohnt in ner ananas ganz tief im meer", message, re.IGNORECASE)
+    def matches(self, message: str) -> bool:
+        return re.search(r"^wer wohnt in ner ananas ganz tief im meer", message, re.IGNORECASE) is not None
 
-    def get_response(self, chat: Chat, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         return 'spongebob schwammkopf'
 
 
@@ -37,10 +37,10 @@ class RicolaRule(ResponseRule):
     __description__ = "Ricola easter egg"
     __priority__ = 100.0
 
-    def matches(self, message: str):
-        return re.search(r"^wer (hat es|hats) erfunden", message, re.IGNORECASE)
+    def matches(self, message: str) -> bool:
+        return re.search(r"^wer (hat es|hats) erfunden", message, re.IGNORECASE) is not None
 
-    def get_response(self, chat: Chat, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
             return 'benjamin oesterle'
         else:
@@ -52,8 +52,8 @@ class GhostbustersRule(ResponseRule):
     __description__ = "Ghostbusters easter egg"
     __priority__ = 100.0
 
-    def matches(self, message: str):
-        return re.search(r"^who y(ou|a) gonna call", message, re.IGNORECASE)
+    def matches(self, message: str) -> bool:
+        return re.search(r"^who y(ou|a) gonna call", message, re.IGNORECASE) is not None
 
-    def get_response(self, chat: Chat, sender: str, message: str):
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         return 'ghostbusters'
