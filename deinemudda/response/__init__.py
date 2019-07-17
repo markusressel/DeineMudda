@@ -46,7 +46,7 @@ class ResponseManager:
         rule_instances = list(map(lambda x: x(self._persistence), rule_classes))
         return sorted(rule_instances, key=lambda x: x.__priority__, reverse=True)
 
-    def find_matching_rule(self, chat: Chat, sender: str, message: str) -> ResponseRule or None:
+    def find_matching_rule(self, chat: Chat, sender: str, message: str) -> str or None:
         """
         Processes the given message and returns a response if one of the response rules match
         :param chat: the chat this message was sent in
