@@ -62,15 +62,15 @@ class ResponseManager:
         from pattern import text
         parsed = text.parse(normalized_message, relations=True, lemmata=True)
 
+        global_trigger_chance = float(chat.get_setting(SETTINGS_TRIGGER_PROBABILITY_KEY,
+                                                       default=SETTINGS_TRIGGER_PROBABILITY_DEFAULT))
+        if random() >= global_trigger_chance:
+            # do not respond
+            return
+
         for response_rule in self.response_rules:
             # TODO: get trigger chance for specific rule based on chat id
             # trigger_chance = int(chat.get_setting("{}-TriggerChance".format(response_rule.__id__), default="1"))
-            trigger_chance = float(chat.get_setting(SETTINGS_TRIGGER_PROBABILITY_KEY,
-                                                    default=SETTINGS_TRIGGER_PROBABILITY_DEFAULT))
-
-            if random() >= trigger_chance:
-                # skip rule
-                continue
 
             if response_rule.matches(message):
                 response = response_rule.get_response(chat, sender, normalized_message)
