@@ -26,7 +26,7 @@ from telegram_click.permission import GROUP_ADMIN, PRIVATE_CHAT, GROUP_CREATOR
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS, \
     COMMAND_GET_SETTINGS, SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_ANTISPAM_ENABLED_KEY, \
-    SETTINGS_ANTISPAM_ENABLED_DEFAULT, SETTINGS_TRIGGER_PROBABILITY_DEFAULT
+    SETTINGS_ANTISPAM_ENABLED_DEFAULT, SETTINGS_TRIGGER_PROBABILITY_DEFAULT, COMMAND_VERSION, DEINE_MUDDA_VERSION
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.response import ResponseManager
 from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT, format_metrics
@@ -56,6 +56,10 @@ class DeineMuddaBot:
                     COMMAND_COMMANDS,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
                     callback=self._commands_command_callback),
+                CommandHandler(
+                    COMMAND_VERSION,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._version_command_callback),
                 CommandHandler(
                     COMMAND_STATS,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
@@ -228,6 +232,18 @@ class DeineMuddaBot:
         send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN)
 
     @command(
+        name=COMMAND_VERSION,
+        description="Show application version.",
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
+    )
+    def _version_command_callback(self, update: Update, context: CallbackContext):
+        bot = context.bot
+        chat_id = update.effective_message.chat_id
+        message_id = update.effective_message.message_id
+        text = "Version: `{}`".format(DEINE_MUDDA_VERSION)
+        send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN, reply_to=message_id)
+
+    @command(
         name=COMMAND_STATS,
         description="List bot statistics.",
         permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
@@ -239,12 +255,12 @@ class DeineMuddaBot:
         :param context: telegram context
         """
         bot = context.bot
-        message = update.effective_message
-        chat_id = update.effective_chat.id
+        message_id = update.effective_message.message_id
+        chat_id = update.effective_message.chat_id
 
         text = format_metrics()
 
-        send_message(bot, chat_id, text, reply_to=message.message_id)
+        send_message(bot, chat_id, text, reply_to=message_id)
 
     @command(
         name=COMMAND_MUDDA,
@@ -285,10 +301,10 @@ class DeineMuddaBot:
 
         message = "\n".join(lines)
         if message:
-            send_message(bot, chat_id, message)
+            send_message(bot, chat_id, message, reply_to=message_id)
         else:
             # TODO: would be better if this could display default values to give at least some information
-            send_message(bot, chat_id, "No chat specific settings set")
+            send_message(bot, chat_id, "No chat specific settings set", reply_to=message_id)
 
     @command(
         name=COMMAND_SET_CHANCE,
@@ -308,12 +324,13 @@ class DeineMuddaBot:
     def _set_chance_command_callback(self, update: Update, context: CallbackContext, probability):
         bot = context.bot
         chat_id = update.effective_message.chat_id
+        message_id = update.effective_message.message_id
 
         chat = self._persistence.get_chat(chat_id)
         chat.set_setting(SETTINGS_TRIGGER_PROBABILITY_KEY, str(probability))
         self._persistence.add_or_update_chat(chat)
 
-        send_message(bot, chat_id, message="TriggerChance: {}%".format(probability * 100))
+        send_message(bot, chat_id, message="TriggerChance: {}%".format(probability * 100), reply_to=message_id)
 
     @command(
         name=COMMAND_SET_ANTISPAM,
@@ -330,9 +347,10 @@ class DeineMuddaBot:
     def _set_antispam_command_callback(self, update: Update, context: CallbackContext, new_state: str):
         bot = context.bot
         chat_id = update.effective_message.chat_id
+        message_id = update.effective_message.message_id
 
         chat = self._persistence.get_chat(chat_id)
         chat.set_setting(SETTINGS_ANTISPAM_ENABLED_KEY, new_state)
         self._persistence.add_or_update_chat(chat)
 
-        send_message(bot, chat_id, message="Antispam: {}".format(new_state))
+        send_message(bot, chat_id, message="Antispam: {}".format(new_state), reply_to=message_id)
