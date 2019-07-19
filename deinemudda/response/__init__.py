@@ -90,5 +90,5 @@ class ResponseManager:
         # we will only parse the message in lower case
         normalized_message = normalized_message.lower()
         # remove all characters from the message except the given ones
-        normalized_message = re.sub('[^a-z0-9| ?]+', '', normalized_message)
+        normalized_message = re.sub('[^a-z0-9äöüß| ?]+', '', normalized_message)
         return normalized_message
