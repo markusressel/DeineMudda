@@ -34,6 +34,12 @@ Make sure to use the project base dir as the working directory and run:
 python3 ./deinemudda/main.py
 ```
 
+## Telegram bot config
+
+For the bot to be able to read messages you have to set the `Privacy` 
+setting of your bot to `DISABLED` (using `/setprivacy` and `disable`).
+Otherwise the bot is only allowed to read messages containing commands.
+
 # Attributions
 
 Thx to [@njamster](https://github.com/njamster) for coming up with the idea and first working version
