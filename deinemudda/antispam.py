@@ -26,14 +26,16 @@ from deinemudda.util import send_message
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
+KEY_LAST_MESSAGE_TIME = "last_message_time"
+KEY_HAS_BEEN_WARNED = "has_been_warned"
+
 
 class AntiSpam:
     """
     Keeps track of messages from users to decide if someone is spamming commands
     """
 
-    # dictionary used for antispam-protection, if activated
-    spamtracker = {}
+    data = {}
 
     def __init__(self, config: AppConfig, persistence: Persistence):
         self._config = config
@@ -49,11 +51,11 @@ class AntiSpam:
         if not self._is_spam(update, context):
             return False
 
-        warned = self.spamtracker[from_user.id][1]
+        warned = self.data[from_user.id][KEY_HAS_BEEN_WARNED]
         if warned:
             try:
                 kicked = bot.kickChatMember(chat_id, from_user.id)
-                del self.spamtracker[from_user.id]
+                del self.data[from_user.id]
                 LOGGER.debug("Kicked: {}".format(kicked))
             except Exception as ex:
                 LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
@@ -62,13 +64,9 @@ class AntiSpam:
                          chat_id,
                          parse_mode=ParseMode.MARKDOWN,
                          message="{}: **Stop spamming or I will kick you!**".format(from_user.name))
-            new_elem = {from_user.id: [now, True]}
-            self.spamtracker.update(new_elem)
             warned = True
 
-        new_elem = {from_user.id: [now, warned]}
-        self.spamtracker.update(new_elem)
-
+        self._update_data(from_user.id, now, warned)
         return True
 
     def _is_spam(self, update: Update, context: CallbackContext) -> bool:
@@ -89,12 +87,19 @@ class AntiSpam:
 
         from_user = update.effective_message.from_user
         now = datetime.datetime.now()
-        if from_user.id in self.spamtracker:
-            difference = now - self.spamtracker[from_user.id][0]
+        if from_user.id in self.data:
+            difference = now - self.data[from_user.id][KEY_LAST_MESSAGE_TIME]
             if difference < datetime.timedelta(seconds=self._duration):
                 return True
         else:
-            new_elem = {from_user.id: [now, False]}
-            self.spamtracker.update(new_elem)
+            self._update_data(from_user.id, now, False)
 
         return False
+
+    def _update_data(self, id: int, last_message_time: datetime, has_been_warned: bool):
+        new_elem = {
+            id: {
+                KEY_LAST_MESSAGE_TIME: last_message_time,
+                KEY_HAS_BEEN_WARNED: has_been_warned}
+        }
+        self.data.update(new_elem)
