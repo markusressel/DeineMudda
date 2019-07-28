@@ -40,7 +40,7 @@ class AntiSpam:
     def __init__(self, config: AppConfig, persistence: Persistence):
         self._config = config
         self._persistence = persistence
-        self._duration = 30
+        self._user_timeout_duration = 30
 
     def process_message(self, update: Update, context: CallbackContext) -> bool:
         now = datetime.datetime.now()
@@ -55,7 +55,6 @@ class AntiSpam:
         if warned:
             try:
                 kicked = bot.kickChatMember(chat_id, from_user.id)
-                del self.data[from_user.id]
                 LOGGER.debug("Kicked: {}".format(kicked))
             except Exception as ex:
                 LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
@@ -63,7 +62,7 @@ class AntiSpam:
             send_message(bot,
                          chat_id,
                          parse_mode=ParseMode.MARKDOWN,
-                         message="{}: **Stop spamming or I will kick you!**".format(from_user.name))
+                         message="{}: **Stop spamming!**".format(from_user.name))
             warned = True
 
         self._update_data(from_user.id, now, warned)
@@ -89,8 +88,10 @@ class AntiSpam:
         now = datetime.datetime.now()
         if from_user.id in self.data:
             difference = now - self.data[from_user.id][KEY_LAST_MESSAGE_TIME]
-            if difference < datetime.timedelta(seconds=self._duration):
+            if difference < datetime.timedelta(seconds=self._user_timeout_duration):
                 return True
+            else:
+                self._update_data(from_user.id, now, False)
         else:
             self._update_data(from_user.id, now, False)
 
