@@ -13,7 +13,6 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import datetime
 import logging
 
 from telegram import Bot, Update, ParseMode
@@ -23,6 +22,7 @@ from telegram_click.argument import Argument, Selection
 from telegram_click.decorator import command
 from telegram_click.permission import GROUP_ADMIN, PRIVATE_CHAT, GROUP_CREATOR
 
+from deinemudda.antispam import AntiSpam
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS, \
     COMMAND_GET_SETTINGS, SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_ANTISPAM_ENABLED_KEY, \
@@ -32,9 +32,6 @@ from deinemudda.response import ResponseManager
 from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT, format_metrics
 from deinemudda.util import send_message
 
-# dictionary used for antispam-protection, if activated
-spamtracker = {}
-
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
@@ -42,6 +39,7 @@ LOGGER.setLevel(logging.DEBUG)
 class DeineMuddaBot:
 
     def __init__(self, config: AppConfig, persistence: Persistence):
+        self._antispam = AntiSpam(config, persistence)
         self._config = config
         self._persistence = persistence
         self._response_manager = ResponseManager(self._persistence)
@@ -179,47 +177,6 @@ class DeineMuddaBot:
                 chat.users = list(filter(lambda x: x.id != member.id, chat.users))
                 self._persistence.add_or_update_chat(chat)
 
-    def _antispam(self, update: Update, context: CallbackContext, n: int = 30):
-        bot = context.bot
-        chat_id = update.effective_message.chat_id
-
-        chat = self._persistence.get_chat(chat_id)
-        if chat is None:
-            return
-        anti_spam = chat.get_setting(SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT)
-
-        if anti_spam == "off":
-            return False
-
-        from_user = update.effective_message.from_user
-        now = datetime.datetime.now()
-
-        if from_user.id in spamtracker:
-            difference = now - spamtracker[from_user.id][0]
-            if difference < datetime.timedelta(seconds=n):
-                warned = spamtracker[from_user.id][1]
-                if warned:
-                    try:
-                        kicked = bot.kickChatMember(chat_id, from_user.id)
-                        del spamtracker[from_user.id]
-                        LOGGER.debug("Kicked: {}".format(kicked))
-                    except Exception as ex:
-                        LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
-                else:
-                    send_message(bot,
-                                 chat_id,
-                                 parse_mode=ParseMode.HTML,
-                                 message="{}: <b>Stop spamming or I will kick you!</b>".format(from_user.name))
-                    new_elem = {from_user.id: [now, True]}
-                    spamtracker.update(new_elem)
-                return True
-
-        warned = False
-        new_elem = {from_user.id: [now, warned]}
-        spamtracker.update(new_elem)
-
-        return False
-
     @command(
         name=COMMAND_COMMANDS,
         description="List commands supported by this bot.",
@@ -269,15 +226,7 @@ class DeineMuddaBot:
     )
     def _mudda_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
-        chat_id = update.effective_message.chat_id
-        message_id = update.effective_message.message_id
-
-        if self._antispam(update, context):
-            try:
-                LOGGER.debug("Trying to removing message {} in chat {} because of spam".format(message_id, chat_id))
-                bot.delete_message(chat_id=chat_id, message_id=message_id)
-            except Exception as ex:
-                LOGGER.debug("Couldn't remove message: {}".format(ex))
+        if self._antispam.process_message(update, context):
             return
 
         text = "deine mudda"
