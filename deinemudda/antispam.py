@@ -20,7 +20,7 @@ from telegram.ext import CallbackContext
 
 from deinemudda.config import AppConfig
 from deinemudda.const import SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT
-from deinemudda.persistence import Persistence
+from deinemudda.persistence import Persistence, Chat
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -34,9 +34,6 @@ class AntiSpam:
     Keeps track of messages from users to decide if someone is spamming commands
     """
 
-    banned_users = set()
-    timeouted_users = set()
-
     data = {}
 
     def __init__(self, config: AppConfig, persistence: Persistence):
@@ -47,6 +44,13 @@ class AntiSpam:
         self._spam_message_amount = 1
         self._user_timeout_duration = 30
 
+    def _enabled(self, chat_id: int) -> bool:
+        chat = self._persistence.get_chat(chat_id)
+        if chat is None:
+            return False
+        anti_spam = chat.get_setting(SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT)
+        return anti_spam is True
+
     def process_message(self, update: Update, context: CallbackContext) -> bool:
         """
         Processes a message
@@ -54,24 +58,42 @@ class AntiSpam:
         :param context: callback context
         :return: true if the message is spam, false otherwise
         """
-        now = datetime.datetime.now()
         bot = context.bot
         chat_id = update.effective_message.chat_id
+
+        if not self._enabled(chat_id):
+            return False
+
         from_user = update.effective_message.from_user
+        self._update_data(from_user.id)
 
-        self._update_data(from_user.id, now)
+        user_entity = self._persistence.get_user(from_user.id)
 
+        # check if the user is banned
+        if user_entity.is_banned:
+            return True
+
+        # check if the user has a timeout
+        now = datetime.datetime.now()
+        if user_entity.last_timeout is not None and user_entity.last_timeout >= now - datetime.timedelta(
+                seconds=self._user_timeout_duration):
+            return True
+
+        # check if the message is spam
         if not self._is_spam(update, context):
             return False
 
-        # TODO: check the last time when the user has been timeouted, and if it is not long ago, kick/ban him instead of just timeouting
-        self.timeout_user(from_user.id)
-
-        # try:
-        #     kicked = bot.kickChatMember(chat_id, from_user.id)
-        #     LOGGER.debug("Kicked: {}".format(kicked))
-        # except Exception as ex:
-        #     LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
+        # check how long ago the last timeout was
+        if user_entity.last_timeout is None or user_entity.last_timeout < now - datetime.timedelta(
+                seconds=self._user_timeout_duration):
+            self.timeout_user(from_user.id)
+        else:
+            try:
+                kicked = bot.kickChatMember(chat_id, from_user.id)
+                LOGGER.debug("Kicked: {}".format(kicked))
+            except Exception as ex:
+                LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
+            self.ban_user(from_user.id)
 
         return True
 
@@ -82,23 +104,7 @@ class AntiSpam:
         :param context: callback context
         :return: true if spam, false otherwise
         """
-        chat_id = update.effective_message.chat_id
-        chat = self._persistence.get_chat(chat_id)
-        if chat is None:
-            return False
-        anti_spam = chat.get_setting(SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT)
-
-        if anti_spam == "off":
-            return False
-
         from_user = update.effective_message.from_user
-
-        if from_user.id in self.timeouted_users:
-            # TODO: check if timeout has expired
-            return True
-
-        if from_user.id in self.banned_users:
-            return True
 
         message_count = len(self.data[from_user.id][KEY_LAST_MESSAGE_TIMES])
         if message_count >= self._spam_message_amount:
@@ -111,18 +117,30 @@ class AntiSpam:
         Timeout a specific user
         :param user_id: the user id
         """
-        # TODO: this should probably be persisted
-        self.timeouted_users.add(user_id)
+        user_entity = self._persistence.get_user(user_id)
+        user_entity.last_timeout = datetime.datetime.now()
+        self._persistence.add_or_update_user(user_entity)
 
     def ban_user(self, user_id: int):
         """
         Ban a specific user
         :param user_id: the user id
         """
-        # TODO: this should probably be persisted
-        self.banned_users.add(user_id)
+        user_entity = self._persistence.get_user(user_id)
+        user_entity.is_banned = True
+        self._persistence.add_or_update_user(user_entity)
 
-    def _update_data(self, user_id: int, latest_message_time: datetime):
+    def unban_user(self, user_id: int):
+        """
+        Un-Ban a specific user
+        :param user_id: the user id
+        """
+        user_entity = self._persistence.get_user(user_id)
+        user_entity.is_banned = False
+        self._persistence.add_or_update_user(user_entity)
+
+    def _update_data(self, user_id: int) -> dict:
+        latest_message_time = datetime.datetime.now()
         old_elem = self.data.get(user_id, None)
         if old_elem is None:
             message_times = []
@@ -130,9 +148,8 @@ class AntiSpam:
             message_times = old_elem[KEY_LAST_MESSAGE_TIMES]
 
         # remove message times outside interesting window
-        message_times = list(
-            filter(lambda x: x < (latest_message_time - self._spam_time_window),
-                   message_times)).append(latest_message_time)
+        message_times = list(filter(lambda x: x < (latest_message_time - self._spam_time_window), message_times))
+        message_times.append(latest_message_time)
 
         new_elem = {
             user_id: {
@@ -140,3 +157,4 @@ class AntiSpam:
             }
         }
         self.data.update(new_elem)
+        return new_elem
