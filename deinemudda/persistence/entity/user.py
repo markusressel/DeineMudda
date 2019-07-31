@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 
 from deinemudda.persistence.entity import Base
@@ -31,6 +31,9 @@ class User(Base):
     username = Column(String)
     first_name = Column(String)
     full_name = Column(String)
+
+    last_timeout = Column(DateTime)
+    is_banned = Column(Boolean, default=False)
 
     chats = relationship(
         "Chat",
