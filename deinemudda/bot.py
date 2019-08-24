@@ -51,8 +51,11 @@ class DeineMuddaBot:
 
         handler_groups = {
             0: [MessageHandler(filters=None, callback=self._any_message_callback)],
-            1: [CallbackQueryHandler(callback=self._inline_keyboard_click_callback)],
-            2: [MessageHandler(Filters.text, callback=self._message_callback),
+            1: [MessageHandler(
+                filters=Filters.group & (~ Filters.reply) & (~ Filters.forwarded),
+                callback=self._group_message_callback)],
+            2: [CallbackQueryHandler(callback=self._inline_keyboard_click_callback)],
+            3: [MessageHandler(Filters.text, callback=self._message_callback),
                 CommandHandler(
                     COMMAND_COMMANDS,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
@@ -84,9 +87,6 @@ class DeineMuddaBot:
                 MessageHandler(
                     filters=Filters.command & ~ Filters.reply,
                     callback=self._commands_command_callback)],
-            3: [MessageHandler(
-                filters=Filters.group & (~ Filters.reply) & (~ Filters.forwarded),
-                callback=self._group_message_callback)],
         }
 
         for group, handlers in handler_groups.items():
@@ -189,6 +189,8 @@ class DeineMuddaBot:
 
         try:
             chat_entity = self._persistence.get_chat(chat_id)
+            if chat_entity is None:
+                return
             vote_menu = chat_entity.get_vote_menu(message_id)
             if vote_menu is None:
                 LOGGER.warning("Couldn't find vote menu for message: {}".format(message_id))
