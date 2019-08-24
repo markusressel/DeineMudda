@@ -13,10 +13,31 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from telegram import Bot
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 
-def send_message(bot: Bot, chat_id: str, message: str, parse_mode: str = None, reply_to: int = None):
+def build_menu(table: [[(str, str)]]) -> InlineKeyboardMarkup:
+    """
+    Creates an inline keyboard from a (text, data) tuple matrix
+    :param table: list of lists containing (text, data) tuples
+    :return: inline keyboard markup
+    """
+    from emoji import emojize
+
+    menu = []
+    for row in table:
+        column_items = []
+        for column in row:
+            text = emojize(column[0], use_aliases=True)
+            callback_data = column[0] if column[1] is None or len(column[1]) <= 0 else column[1]
+            column_items.append(InlineKeyboardButton(text=text, callback_data=callback_data))
+        menu.append(column_items)
+
+    return InlineKeyboardMarkup(menu, n_cols=len(menu[0]))
+
+
+def send_message(bot: Bot, chat_id: str, message: str, parse_mode: str = None, reply_to: int = None,
+                 menu: InlineKeyboardMarkup = None) -> Message:
     """
     Sends a text message to the given chat
     :param bot: the bot
@@ -24,11 +45,13 @@ def send_message(bot: Bot, chat_id: str, message: str, parse_mode: str = None, r
     :param message: the message to chat (may contain emoji aliases)
     :param parse_mode: specify whether to parse the text as markdown or HTML
     :param reply_to: the message id to reply to
+    :param menu: inline keyboard menu markup
     """
     from emoji import emojize
 
     emojized_text = emojize(message, use_aliases=True)
-    bot.send_message(chat_id=chat_id, parse_mode=parse_mode, text=emojized_text, reply_to_message_id=reply_to)
+    return bot.send_message(chat_id=chat_id, parse_mode=parse_mode, text=emojized_text, reply_to_message_id=reply_to,
+                            reply_markup=menu)
 
 
 def import_submodules(package, recursive=True) -> dict:

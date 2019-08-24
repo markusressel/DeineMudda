@@ -15,8 +15,8 @@
 
 import logging
 
-from telegram import Bot, Update, ParseMode
-from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackContext
+from telegram import Bot, Update, ParseMode, InlineKeyboardMarkup
+from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackContext, CallbackQueryHandler
 from telegram_click import generate_command_list
 from telegram_click.argument import Argument, Selection
 from telegram_click.decorator import command
@@ -26,11 +26,13 @@ from deinemudda.antispam import AntiSpam
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS, \
     COMMAND_GET_SETTINGS, SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_ANTISPAM_ENABLED_KEY, \
-    SETTINGS_ANTISPAM_ENABLED_DEFAULT, SETTINGS_TRIGGER_PROBABILITY_DEFAULT, COMMAND_VERSION, DEINE_MUDDA_VERSION
+    SETTINGS_ANTISPAM_ENABLED_DEFAULT, SETTINGS_TRIGGER_PROBABILITY_DEFAULT, COMMAND_VERSION, DEINE_MUDDA_VERSION, \
+    VOTE_BUTTON_ID_THUMBS_UP, VOTE_BUTTON_ID_THUMBS_DOWN
 from deinemudda.persistence import Persistence, Chat
+from deinemudda.persistence.entity.chat import VoteMenu, VoteMenuItem
 from deinemudda.response import ResponseManager
 from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT, format_metrics
-from deinemudda.util import send_message
+from deinemudda.util import send_message, build_menu
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -49,7 +51,8 @@ class DeineMuddaBot:
 
         handler_groups = {
             0: [MessageHandler(filters=None, callback=self._any_message_callback)],
-            1: [MessageHandler(Filters.text, callback=self._message_callback),
+            1: [CallbackQueryHandler(callback=self._inline_keyboard_click_callback)],
+            2: [MessageHandler(Filters.text, callback=self._message_callback),
                 CommandHandler(
                     COMMAND_COMMANDS,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
@@ -81,7 +84,7 @@ class DeineMuddaBot:
                 MessageHandler(
                     filters=Filters.command & ~ Filters.reply,
                     callback=self._commands_command_callback)],
-            2: [MessageHandler(
+            3: [MessageHandler(
                 filters=Filters.group & (~ Filters.reply) & (~ Filters.forwarded),
                 callback=self._group_message_callback)],
         }
@@ -104,17 +107,43 @@ class DeineMuddaBot:
         """
         self._updater.stop()
 
-    def _shout(self, bot: Bot, message, text: str, reply: bool = True):
+    def _shout(self, bot: Bot, message, text: str, reply: bool = True, show_vote_menu: bool = True):
+        """
+        Shouts a message
+        :param bot: the bot instance
+        :param message: the message instance
+        :param text: the text to shout
+        :param reply: whether to reply to the original message
+        :param show_vote_menu: whether to show a voting menu
+        """
         shouting_text = "<b>{}!!!</b>".format(text.upper())
 
         reply_to_message_id = None
         if reply:
             reply_to_message_id = message.message_id
 
-        send_message(bot, message.chat_id,
-                     message=shouting_text,
-                     parse_mode=ParseMode.HTML,
-                     reply_to=reply_to_message_id)
+        menu_markup = None
+        new_vote_menu_items = None
+        if show_vote_menu:
+            new_vote_menu_items = [
+                VoteMenuItem(id=VOTE_BUTTON_ID_THUMBS_UP, text=":thumbsup:", count=0),
+                VoteMenuItem(id=VOTE_BUTTON_ID_THUMBS_DOWN, text=":thumbsdown:", count=0)
+            ]
+            menu_markup = self._build_vote_menu(new_vote_menu_items)
+
+        message = send_message(bot, message.chat_id,
+                               message=shouting_text,
+                               parse_mode=ParseMode.HTML,
+                               reply_to=reply_to_message_id,
+                               menu=menu_markup)
+
+        if show_vote_menu:
+            # persist the vote menu with its id
+            chat_entity = self._persistence.get_chat(message.chat_id)
+            new_vote_menu = VoteMenu(chat_id=message.chat_id, message_id=message.message_id)
+            new_vote_menu.items = new_vote_menu_items
+            chat_entity.add_or_update_vote_menu(new_vote_menu)
+            self._persistence.add_or_update_chat(chat_entity)
 
     def _any_message_callback(self, update: Update, context: CallbackContext):
         chat_id = update.effective_message.chat_id
@@ -128,9 +157,55 @@ class DeineMuddaBot:
             chat.set_setting(SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT)
             chat.set_setting(SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_TRIGGER_PROBABILITY_DEFAULT)
             self._persistence.add_or_update_chat(chat)
+            chat = self._persistence.get_chat(chat_id)
 
         # remember chat user
         self._persistence.add_or_update_chat_member(chat, from_user)
+
+    @staticmethod
+    def _build_vote_menu(vote_menu_items: [VoteMenuItem]) -> InlineKeyboardMarkup:
+        """
+        Builds a vote menu from persistence items
+        :param vote_menu_items: vote menu items
+        :return: inline menu markup
+        """
+        vote_options = []
+        for item in vote_menu_items:
+            vote_options.append(("{} - {}".format(item.text, item.count), item.id))
+
+        menu_markup = build_menu([vote_options])
+        return menu_markup
+
+    def _inline_keyboard_click_callback(self, update: Update, context: CallbackContext):
+        bot = context.bot
+        chat_id = update.effective_chat.id
+        message_id = update.effective_message.message_id
+
+        query = update.callback_query
+        query_id = query.id
+        selection_data = query.data
+
+        try:
+            chat_entity = self._persistence.get_chat(chat_id)
+            vote_menu = chat_entity.get_vote_menu(message_id)
+            if vote_menu is None:
+                LOGGER.warning("Couldn't find vote menu for message: {}".format(message_id))
+                return
+
+            # TODO: remember which user already voted
+            # TODO: allow user to revoke their voting
+
+            # register and persist vote
+            vote_menu.vote(selection_data)
+            self._persistence.add_or_update_chat(chat_entity)
+
+            menu_markup = self._build_vote_menu(vote_menu.items)
+
+            query.edit_message_reply_markup(reply_markup=menu_markup)
+            bot.answer_callback_query(query_id, text='Vote accepted')
+        except Exception:
+            logging.exception("Error processing vote")
+            bot.answer_callback_query(query_id, text='')
 
     @MESSAGE_TIME.time()
     def _message_callback(self, update: Update, context: CallbackContext):
@@ -230,7 +305,7 @@ class DeineMuddaBot:
             return
 
         text = "deine mudda"
-        self._shout(bot, update.message, text, reply=False)
+        self._shout(bot, update.message, text, reply=False, show_vote_menu=False)
 
     @command(
         name=COMMAND_GET_SETTINGS,
@@ -293,13 +368,13 @@ class DeineMuddaBot:
         ],
         permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
     )
-    def _set_antispam_command_callback(self, update: Update, context: CallbackContext, new_state: str):
+    def _set_antispam_command_callback(self, update: Update, context: CallbackContext, state: str):
         bot = context.bot
         chat_id = update.effective_message.chat_id
         message_id = update.effective_message.message_id
 
         chat = self._persistence.get_chat(chat_id)
-        chat.set_setting(SETTINGS_ANTISPAM_ENABLED_KEY, new_state)
+        chat.set_setting(SETTINGS_ANTISPAM_ENABLED_KEY, state)
         self._persistence.add_or_update_chat(chat)
 
-        send_message(bot, chat_id, message="Antispam: {}".format(new_state), reply_to=message_id)
+        send_message(bot, chat_id, message="Antispam: {}".format(state), reply_to=message_id)
