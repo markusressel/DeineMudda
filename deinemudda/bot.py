@@ -208,10 +208,12 @@ class DeineMuddaBot:
         try:
             chat_entity = self._persistence.get_chat(chat_id)
             if chat_entity is None:
+                bot.answer_callback_query(query_id, text="Unknown message, cant vote")
                 return
             vote_menu = chat_entity.get_vote_menu(message_id)
             if vote_menu is None:
                 LOGGER.warning("Couldn't find vote menu for message: {}".format(message_id))
+                bot.answer_callback_query(query_id, text="Unknown message, cant vote")
                 return
 
             # register and persist vote
@@ -225,7 +227,7 @@ class DeineMuddaBot:
             bot.answer_callback_query(query_id, text='Vote accepted')
         except Exception:
             logging.exception("Error processing vote")
-            bot.answer_callback_query(query_id, text='')
+            bot.answer_callback_query(query_id, text="Error counting vote")
 
     @MESSAGE_TIME.time()
     def _message_callback(self, update: Update, context: CallbackContext):
