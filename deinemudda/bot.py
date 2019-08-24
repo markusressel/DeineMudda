@@ -126,8 +126,8 @@ class DeineMuddaBot:
         new_vote_menu_items = None
         if show_vote_menu:
             new_vote_menu_items = [
-                VoteMenuItem(id=VOTE_BUTTON_ID_THUMBS_UP, text=":thumbsup:", count=0),
-                VoteMenuItem(id=VOTE_BUTTON_ID_THUMBS_DOWN, text=":thumbsdown:", count=0)
+                VoteMenuItem(id=VOTE_BUTTON_ID_THUMBS_UP, text=":thumbsup:"),
+                VoteMenuItem(id=VOTE_BUTTON_ID_THUMBS_DOWN, text=":thumbsdown:")
             ]
             menu_markup = self._build_vote_menu(new_vote_menu_items)
 
@@ -171,13 +171,15 @@ class DeineMuddaBot:
         """
         vote_options = []
         for item in vote_menu_items:
-            vote_options.append(("{} - {}".format(item.text, item.count), item.id))
+            item_count = sum(list(map(lambda x: x.count, item.voters)))
+            vote_options.append(("{} - {}".format(item.text, item_count), item.id))
 
         menu_markup = build_menu([vote_options])
         return menu_markup
 
     def _inline_keyboard_click_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
+        user_id = update.callback_query.from_user.id
         chat_id = update.effective_chat.id
         message_id = update.effective_message.message_id
 
@@ -192,11 +194,9 @@ class DeineMuddaBot:
                 LOGGER.warning("Couldn't find vote menu for message: {}".format(message_id))
                 return
 
-            # TODO: remember which user already voted
-            # TODO: allow user to revoke their voting
-
             # register and persist vote
-            vote_menu.vote(selection_data)
+            # TODO: allow user to revoke their voting
+            vote_menu.vote(user_id, selection_data)
             self._persistence.add_or_update_chat(chat_entity)
 
             menu_markup = self._build_vote_menu(vote_menu.items)

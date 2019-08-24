@@ -34,6 +34,20 @@ class Setting(Base):
     value = Column(String)
 
 
+class VoteMenuItemVoter(Base):
+    """
+    Data model of chat specific settings
+    """
+    __tablename__ = 'vote_menu_item_voters'
+    __table_args__ = (UniqueConstraint('vote_menu_item_id', 'user_id', name='_vote_menu_item_voter_uc'),)
+
+    user_id = Column(String, primary_key=True)
+    vote_menu_item_id = Column(Integer, ForeignKey('vote_menu_items.id'))
+    vote_menu_item = relationship("VoteMenuItem", back_populates="voters")
+
+    count = Column(Integer)
+
+
 class VoteMenuItem(Base):
     """
     Data model of chat specific settings
@@ -46,7 +60,12 @@ class VoteMenuItem(Base):
     vote_menu = relationship("VoteMenu", back_populates="items")
 
     text = Column(String)
-    count = Column(Integer)
+    voters = relationship(
+        "VoteMenuItemVoter",
+        back_populates="vote_menu_item",
+        single_parent=True,
+        cascade="all, delete-orphan",
+        lazy='joined')
 
 
 class VoteMenu(Base):
@@ -67,14 +86,44 @@ class VoteMenu(Base):
         cascade="all, delete-orphan",
         lazy='joined')
 
-    def vote(self, item_id: str):
+    def vote(self, user_id: int, item_id: str):
         """
         Vote for a specific VoteMenuItem
+        :param user_id: id of the user that is voting
         :param item_id: id of the item to vote for
         """
         items = list(filter(lambda x: x.id == item_id, self.items))
         if len(items) > 0:
-            items[0].count += 1
+            item = items[0]
+            voters = list(filter(lambda x: x.user_id == user_id, item.voters))
+            if len(voters) > 0:
+                voter = voters[0]
+                voter.count += 1
+            else:
+                voter = VoteMenuItemVoter(user_id=user_id, count=1)
+                item.voters.append(voter)
+        else:
+            raise ValueError(
+                "VoteMenuItem with id '{}' not found in VoteMenu of message {}".format(item_id, self.message_id))
+
+    def revoke_vote(self, user_id: int, item_id: str):
+        """
+        Revoke a vote for a specific VoteMenuItem
+        :param user_id: id of the user that is voting
+        :param item_id: id of the item to vote for
+        """
+        items = list(filter(lambda x: x.id == item_id, self.items))
+        if len(items) > 0:
+            item = items[0]
+            voters = list(filter(lambda x: x.user_id == user_id, item.voters))
+            if len(voters) > 0:
+                voter = voters[0]
+                voter.count -= 1
+            else:
+                voter = VoteMenuItemVoter(user_id, count=1)
+                item.voters.append(voter)
+            # filter out users without votes
+            item.voters = list(filter(lambda x: x.count <= 0, item.voters))
         else:
             raise ValueError(
                 "VoteMenuItem with id '{}' not found in VoteMenu of message {}".format(item_id, self.message_id))
