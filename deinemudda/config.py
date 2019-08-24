@@ -23,7 +23,7 @@ from container_app_conf.source.yaml_source import YamlSource
 
 from deinemudda.const import CONFIG_NODE_ROOT, CONFIG_NODE_TELEGRAM, DEFAULT_SQL_PERSISTENCE_URL, \
     CONFIG_NODE_PERSISTENCE, CONFIG_NODE_STATS, CONFIG_NODE_PORT, CONFIG_NODE_BEHAVIOUR, CONFIG_NODE_WORD_COUNT_RANGE, \
-    CONFIG_NODE_CHAR_COUNT_RANGE
+    CONFIG_NODE_CHAR_COUNT_RANGE, CONFIG_NODE_VOTING
 
 
 class AppConfig(ConfigBase):
@@ -94,4 +94,12 @@ class AppConfig(ConfigBase):
             CONFIG_NODE_PORT
         ],
         default=8000
+    )
+
+    VOTING_ENABLED = IntConfigEntry(
+        key_path=[
+            CONFIG_NODE_ROOT,
+            CONFIG_NODE_VOTING
+        ],
+        default=True
     )
