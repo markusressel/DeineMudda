@@ -182,7 +182,7 @@ class Chat(Base):
         if len(vote_menus) > 0:
             return vote_menus[0]
         else:
-            raise ValueError("VoteMenu with id {} not found in Chat {}".format(message_id, self.id))
+            return None
 
     def add_or_update_vote_menu(self, menu: VoteMenu):
         self.vote_menus.append(menu)
