@@ -124,7 +124,7 @@ class DeineMuddaBot:
 
         menu_markup = None
         new_vote_menu_items = None
-        if show_vote_menu:
+        if show_vote_menu and self._config.VOTING_ENABLED.value:
             new_vote_menu_items = [
                 VoteMenuItem(id=VOTE_BUTTON_ID_THUMBS_UP, text=":thumbsup:"),
                 VoteMenuItem(id=VOTE_BUTTON_ID_THUMBS_DOWN, text=":thumbsdown:")
@@ -137,7 +137,7 @@ class DeineMuddaBot:
                                reply_to=reply_to_message_id,
                                menu=menu_markup)
 
-        if show_vote_menu:
+        if show_vote_menu and self._config.VOTING_ENABLED.value:
             # persist the vote menu with its id
             chat_entity = self._persistence.get_chat(message.chat_id)
             new_vote_menu = VoteMenu(chat_id=message.chat_id, message_id=message.message_id)
