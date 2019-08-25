@@ -74,6 +74,9 @@ class ResponseManager:
 
             if response_rule.matches(message):
                 response = response_rule.get_response(chat, sender, normalized_message)
+
+                # TODO: use voting results to decide if this response should be used or discarded
+
                 if response:
                     RESPONSES_COUNT.labels(chat_id=chat.id, rule=response_rule.__id__).inc()
                     return response

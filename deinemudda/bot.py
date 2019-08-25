@@ -157,6 +157,12 @@ class DeineMuddaBot:
 
         if show_vote_menu and self._config.VOTING_ENABLED.value:
             # persist the vote menu with its id
+
+            # TODO: to be usefull it would be necessary to know what the
+            # initial message was that the bot responded to,
+            # or more precisely, which response rule responded to the mentioned input
+            # and what output it produced
+
             chat_entity = self._persistence.get_chat(message.chat_id)
             new_vote_menu = VoteMenu(chat_id=message.chat_id, message_id=message.message_id)
             new_vote_menu.items = new_vote_menu_items
