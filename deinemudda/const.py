@@ -27,11 +27,11 @@ CONFIG_NODE_VOTING = "voting"
 
 DEFAULT_SQL_PERSISTENCE_URL = "sqlite:///deinemudda.db"
 
-COMMAND_COMMANDS = 'help'
-COMMAND_VERSION = 'version'
+COMMAND_COMMANDS = ['help', 'h']
+COMMAND_VERSION = ['version', 'v']
 COMMAND_STATS = 'stats'
 COMMAND_MUDDA = 'mudda'
-COMMAND_GET_SETTINGS = 'settings'
+COMMAND_GET_SETTINGS = ['settings', 's']
 COMMAND_SET_ANTISPAM = 'set_antispam'
 COMMAND_SET_CHANCE = 'set_chance'
 
