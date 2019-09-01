@@ -32,7 +32,8 @@ class AppConfig(Config):
             CONFIG_NODE_ROOT,
             CONFIG_NODE_TELEGRAM,
             "bot_token"
-        ])
+        ],
+        example="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11")
 
     SQL_PERSISTENCE_URL = StringConfigEntry(
         yaml_path=[
