@@ -18,6 +18,10 @@ DEINE_MUDDA_VERSION = "1.3.2"
 CONFIG_NODE_ROOT = "deinemudda"
 CONFIG_NODE_TELEGRAM = "telegram"
 
+CONFIG_NODE_BEHAVIOUR = "behaviour"
+CONFIG_NODE_WORD_COUNT_RANGE = "word_count_range"
+CONFIG_NODE_CHAR_COUNT_RANGE = "char_count_range"
+
 CONFIG_NODE_PERSISTENCE = "persistence"
 
 CONFIG_NODE_STATS = "stats"
