@@ -19,7 +19,8 @@ from container_app_conf.entry.range import RangeConfigEntry
 from container_app_conf.entry.string import StringConfigEntry
 
 from deinemudda.const import CONFIG_NODE_ROOT, CONFIG_NODE_TELEGRAM, DEFAULT_SQL_PERSISTENCE_URL, \
-    CONFIG_NODE_PERSISTENCE, CONFIG_NODE_STATS, CONFIG_NODE_PORT, CONFIG_NODE_BEHAVIOUR, CONFIG_NODE_WORD_COUNT_RANGE
+    CONFIG_NODE_PERSISTENCE, CONFIG_NODE_STATS, CONFIG_NODE_PORT, CONFIG_NODE_BEHAVIOUR, CONFIG_NODE_WORD_COUNT_RANGE, \
+    CONFIG_NODE_CHAR_COUNT_RANGE
 
 
 class AppConfig(Config):
@@ -51,6 +52,15 @@ class AppConfig(Config):
             CONFIG_NODE_WORD_COUNT_RANGE
         ],
         default="[1..10]"
+    )
+
+    CHAR_COUNT_RANGE = RangeConfigEntry(
+        yaml_path=[
+            CONFIG_NODE_ROOT,
+            CONFIG_NODE_BEHAVIOUR,
+            CONFIG_NODE_CHAR_COUNT_RANGE
+        ],
+        default="[3..255]"
     )
 
     STATS_PORT = IntConfigEntry(

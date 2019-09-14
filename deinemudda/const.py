@@ -20,6 +20,7 @@ CONFIG_NODE_TELEGRAM = "telegram"
 
 CONFIG_NODE_BEHAVIOUR = "behaviour"
 CONFIG_NODE_WORD_COUNT_RANGE = "word_count_range"
+CONFIG_NODE_CHAR_COUNT_RANGE = "char_count_range"
 
 CONFIG_NODE_PERSISTENCE = "persistence"
 

@@ -140,6 +140,12 @@ class DeineMuddaBot:
         from_user = update.message.from_user
         chat = self._persistence.get_chat(chat_id)
 
+        if len(update.message.text) not in self._config.CHAR_COUNT_RANGE.value:
+            return
+
+        if len(update.message.text.split()) not in self._config.WORD_COUNT_RANGE:
+            return
+
         response_message = self._response_manager.find_matching_rule(chat, from_user.first_name, update.message.text)
         if response_message:
             self._shout(bot, update.message, response_message)
