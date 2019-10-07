@@ -20,7 +20,7 @@ from telegram.ext import CallbackContext
 
 from deinemudda.config import AppConfig
 from deinemudda.const import SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT
-from deinemudda.persistence import Persistence, Chat
+from deinemudda.persistence import Persistence
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
@@ -49,7 +49,7 @@ class AntiSpam:
         if chat is None:
             return False
         anti_spam = chat.get_setting(SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT)
-        return anti_spam is True
+        return anti_spam == SETTINGS_ANTISPAM_ENABLED_DEFAULT
 
     def process_message(self, update: Update, context: CallbackContext) -> bool:
         """
