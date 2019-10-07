@@ -143,7 +143,7 @@ class DeineMuddaBot:
         if len(update.message.text) not in self._config.CHAR_COUNT_RANGE.value:
             return
 
-        if len(update.message.text.split()) not in self._config.WORD_COUNT_RANGE:
+        if len(update.message.text.split()) not in self._config.WORD_COUNT_RANGE.value:
             return
 
         response_message = self._response_manager.find_matching_rule(chat, from_user.first_name, update.message.text)
