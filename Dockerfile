@@ -7,7 +7,7 @@ WORKDIR /app
 
 RUN apt-get update
 #RUN apk add bash musl-dev gcc libffi-dev libressl-dev mariadb-dev libxml2-dev libxslt-dev
-RUN apt-get install gcc libffi-dev libssl-dev libxml2-dev libxslt-dev
+RUN apt-get -y install gcc libffi-dev libssl-dev libxml2-dev libxslt-dev
 #RUN python3 -m ensurepip && pip3 install --upgrade pip setuptools
 
 COPY requirements.txt ./
