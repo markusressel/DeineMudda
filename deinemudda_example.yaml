@@ -7,5 +7,8 @@ deinemudda:
     url: "sqlite:///deinemudda.db"
   stats:
     port: 8000
+  behaviour:
+    char_count_range: '[3..255]'
+    word_count_range: '[1..10]'
 
 ...
