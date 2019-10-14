@@ -29,7 +29,6 @@ class AppConfig(ConfigBase):
 
     def __new__(cls, *args, **kwargs):
         yaml_source = YamlSource("deinemudda")
-        yaml_source.load()
         data_sources = [
             EnvSource(),
             yaml_source
