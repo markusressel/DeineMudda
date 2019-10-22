@@ -31,6 +31,7 @@ DEFAULT_SQL_PERSISTENCE_URL = "sqlite:///deinemudda.db"
 
 COMMAND_COMMANDS = ['help', 'h']
 COMMAND_VERSION = ['version', 'v']
+COMMAND_CONFIG = ['config', 'c']
 COMMAND_STATS = 'stats'
 COMMAND_MUDDA = 'mudda'
 COMMAND_GET_SETTINGS = ['settings', 's']

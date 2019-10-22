@@ -26,7 +26,8 @@ from deinemudda.antispam import AntiSpam
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS, \
     COMMAND_GET_SETTINGS, SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_ANTISPAM_ENABLED_KEY, \
-    SETTINGS_ANTISPAM_ENABLED_DEFAULT, SETTINGS_TRIGGER_PROBABILITY_DEFAULT, COMMAND_VERSION, DEINE_MUDDA_VERSION
+    SETTINGS_ANTISPAM_ENABLED_DEFAULT, SETTINGS_TRIGGER_PROBABILITY_DEFAULT, COMMAND_VERSION, DEINE_MUDDA_VERSION, \
+    COMMAND_CONFIG
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.response import ResponseManager
 from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT, format_metrics
@@ -58,6 +59,10 @@ class DeineMuddaBot:
                     COMMAND_VERSION,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
                     callback=self._version_command_callback),
+                CommandHandler(
+                    COMMAND_CONFIG,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._config_command_callback),
                 CommandHandler(
                     COMMAND_STATS,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
@@ -204,6 +209,22 @@ class DeineMuddaBot:
         chat_id = update.effective_message.chat_id
         message_id = update.effective_message.message_id
         text = "Version: `{}`".format(DEINE_MUDDA_VERSION)
+        send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN, reply_to=message_id)
+
+    @command(
+        name=COMMAND_CONFIG,
+        description="Show current application configuration.",
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
+    )
+    def _config_command_callback(self, update: Update, context: CallbackContext):
+        from container_app_conf.formatter.toml import TomlFormatter
+
+        bot = context.bot
+        chat_id = update.effective_message.chat_id
+        message_id = update.effective_message.message_id
+
+        text = self._config.print(formatter=TomlFormatter())
+        text = "```\n{}\n```".format(text)
         send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN, reply_to=message_id)
 
     @command(
