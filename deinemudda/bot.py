@@ -228,7 +228,7 @@ class DeineMuddaBot:
     @command(
         name=COMMAND_CONFIG,
         description="Show current application configuration.",
-        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+        permissions=PRIVATE_CHAT & CONFIG_ADMINS
     )
     def _config_command_callback(self, update: Update, context: CallbackContext):
         from container_app_conf.formatter.toml import TomlFormatter
