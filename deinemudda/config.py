@@ -15,6 +15,7 @@
 
 from container_app_conf import ConfigBase
 from container_app_conf.entry.int import IntConfigEntry
+from container_app_conf.entry.list import ListConfigEntry
 from container_app_conf.entry.range import RangeConfigEntry
 from container_app_conf.entry.string import StringConfigEntry
 from container_app_conf.source.env_source import EnvSource
@@ -44,6 +45,20 @@ class AppConfig(ConfigBase):
         required=True,
         secret=True,
         example="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+    )
+
+    TELEGRAM_ADMIN_USERNAMES = ListConfigEntry(
+        item_type=StringConfigEntry,
+        key_path=[
+            CONFIG_NODE_ROOT,
+            CONFIG_NODE_TELEGRAM,
+            "admin_usernames"
+        ],
+        default=[],
+        example=[
+            "myadminuser",
+            "myotheradminuser"
+        ]
     )
 
     SQL_PERSISTENCE_URL = StringConfigEntry(
