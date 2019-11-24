@@ -120,16 +120,31 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
     __id__ = "AdjectiveCounterIntelligenceRule"
     __description__ = "Adjective counter intelligence"
 
-    def matches(self, message: str) -> bool:
-        # we need to do the parsetree calculation anyway so
-        # there is no need to check this first
-        return True
+    match_cache = {}
 
-    def get_response(self, chat: Chat, sender: int, message: str) -> str or None:
+    def matches(self, message: str) -> bool:
         from pattern.text.search import search
         from pattern.text.de import parsetree
+
         message_tree = parsetree(message, relations=True)
-        for match in search('ADJP', message_tree):
+        matches = search('ADJP', message_tree)
+        if len(matches) > 0:
+            # cache result
+            self.match_cache[hash(message)] = matches
+            return True
+        else:
+            return False
+
+    def get_response(self, chat: Chat, sender: int, message: str) -> str or None:
+        if hash(message) in self.match_cache:
+            matches = self.match_cache[hash(message)]
+        else:
+            from pattern.text.search import search
+            from pattern.text.de import parsetree
+            message_tree = parsetree(message, relations=True)
+            matches = search('ADJP', message_tree)
+
+        for match in matches:
             word = match.constituents()[-1].string
 
             dice = randint(0, 2)
