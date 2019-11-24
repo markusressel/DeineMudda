@@ -13,10 +13,14 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-DEINE_MUDDA_VERSION = "1.3.2"
+DEINE_MUDDA_VERSION = "1.3.5"
 
 CONFIG_NODE_ROOT = "deinemudda"
 CONFIG_NODE_TELEGRAM = "telegram"
+
+CONFIG_NODE_BEHAVIOUR = "behaviour"
+CONFIG_NODE_WORD_COUNT_RANGE = "word_count_range"
+CONFIG_NODE_CHAR_COUNT_RANGE = "char_count_range"
 
 CONFIG_NODE_PERSISTENCE = "persistence"
 
@@ -29,6 +33,7 @@ DEFAULT_SQL_PERSISTENCE_URL = "sqlite:///deinemudda.db"
 
 COMMAND_COMMANDS = ['help', 'h']
 COMMAND_VERSION = ['version', 'v']
+COMMAND_CONFIG = ['config', 'c']
 COMMAND_STATS = 'stats'
 COMMAND_MUDDA = 'mudda'
 COMMAND_GET_SETTINGS = ['settings', 's']

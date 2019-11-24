@@ -15,18 +15,17 @@
 import datetime
 import logging
 
-from telegram import Update, ParseMode
+from telegram import Update
 from telegram.ext import CallbackContext
 
 from deinemudda.config import AppConfig
 from deinemudda.const import SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT
 from deinemudda.persistence import Persistence
-from deinemudda.util import send_message
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
-KEY_LAST_MESSAGE_TIME = "last_message_time"
+KEY_LAST_MESSAGE_TIMES = "last_message_times"
 KEY_HAS_BEEN_WARNED = "has_been_warned"
 
 
@@ -40,32 +39,62 @@ class AntiSpam:
     def __init__(self, config: AppConfig, persistence: Persistence):
         self._config = config
         self._persistence = persistence
+
+        self._spam_time_window = datetime.timedelta(seconds=1)
+        self._spam_message_amount = 1
         self._user_timeout_duration = 30
 
+    def _enabled(self, chat_id: int) -> bool:
+        chat = self._persistence.get_chat(chat_id)
+        if chat is None:
+            return False
+        anti_spam = chat.get_setting(SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT)
+        return anti_spam == SETTINGS_ANTISPAM_ENABLED_DEFAULT
+
     def process_message(self, update: Update, context: CallbackContext) -> bool:
-        now = datetime.datetime.now()
+        """
+        Processes a message
+        :param update: update
+        :param context: callback context
+        :return: true if the message is spam, false otherwise
+        """
         bot = context.bot
         chat_id = update.effective_message.chat_id
-        from_user = update.effective_message.from_user
 
+        if not self._enabled(chat_id):
+            return False
+
+        from_user = update.effective_message.from_user
+        self._update_data(from_user.id)
+
+        user_entity = self._persistence.get_user(from_user.id)
+
+        # check if the user is banned
+        if user_entity.is_banned:
+            return True
+
+        # check if the user has a timeout
+        now = datetime.datetime.now()
+        if user_entity.last_timeout is not None and user_entity.last_timeout >= now - datetime.timedelta(
+                seconds=self._user_timeout_duration):
+            return True
+
+        # check if the message is spam
         if not self._is_spam(update, context):
             return False
 
-        warned = self.data[from_user.id][KEY_HAS_BEEN_WARNED]
-        if warned:
+        # check how long ago the last timeout was
+        if user_entity.last_timeout is None or user_entity.last_timeout < now - datetime.timedelta(
+                seconds=self._user_timeout_duration):
+            self.timeout_user(from_user.id)
+        else:
             try:
                 kicked = bot.kickChatMember(chat_id, from_user.id)
                 LOGGER.debug("Kicked: {}".format(kicked))
             except Exception as ex:
                 LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
-        else:
-            send_message(bot,
-                         chat_id,
-                         parse_mode=ParseMode.MARKDOWN,
-                         message="{}: **Stop spamming!**".format(from_user.name))
-            warned = True
+            self.ban_user(from_user.id)
 
-        self._update_data(from_user.id, now, warned)
         return True
 
     def _is_spam(self, update: Update, context: CallbackContext) -> bool:
@@ -75,32 +104,57 @@ class AntiSpam:
         :param context: callback context
         :return: true if spam, false otherwise
         """
-        chat_id = update.effective_message.chat_id
-        chat = self._persistence.get_chat(chat_id)
-        if chat is None:
-            return False
-        anti_spam = chat.get_setting(SETTINGS_ANTISPAM_ENABLED_KEY, SETTINGS_ANTISPAM_ENABLED_DEFAULT)
-
-        if anti_spam == "off":
-            return False
-
         from_user = update.effective_message.from_user
-        now = datetime.datetime.now()
-        if from_user.id in self.data:
-            difference = now - self.data[from_user.id][KEY_LAST_MESSAGE_TIME]
-            if difference < datetime.timedelta(seconds=self._user_timeout_duration):
-                return True
-            else:
-                self._update_data(from_user.id, now, False)
-        else:
-            self._update_data(from_user.id, now, False)
+
+        message_count = len(self.data[from_user.id][KEY_LAST_MESSAGE_TIMES])
+        if message_count >= self._spam_message_amount:
+            return True
 
         return False
 
-    def _update_data(self, id: int, last_message_time: datetime, has_been_warned: bool):
+    def timeout_user(self, user_id: int):
+        """
+        Timeout a specific user
+        :param user_id: the user id
+        """
+        user_entity = self._persistence.get_user(user_id)
+        user_entity.last_timeout = datetime.datetime.now()
+        self._persistence.add_or_update_user(user_entity)
+
+    def ban_user(self, user_id: int):
+        """
+        Ban a specific user
+        :param user_id: the user id
+        """
+        user_entity = self._persistence.get_user(user_id)
+        user_entity.is_banned = True
+        self._persistence.add_or_update_user(user_entity)
+
+    def unban_user(self, user_id: int):
+        """
+        Un-Ban a specific user
+        :param user_id: the user id
+        """
+        user_entity = self._persistence.get_user(user_id)
+        user_entity.is_banned = False
+        self._persistence.add_or_update_user(user_entity)
+
+    def _update_data(self, user_id: int) -> dict:
+        latest_message_time = datetime.datetime.now()
+        old_elem = self.data.get(user_id, None)
+        if old_elem is None:
+            message_times = []
+        else:
+            message_times = old_elem[KEY_LAST_MESSAGE_TIMES]
+
+        # remove message times outside interesting window
+        message_times = list(filter(lambda x: x < (latest_message_time - self._spam_time_window), message_times))
+        message_times.append(latest_message_time)
+
         new_elem = {
-            id: {
-                KEY_LAST_MESSAGE_TIME: last_message_time,
-                KEY_HAS_BEEN_WARNED: has_been_warned}
+            user_id: {
+                KEY_LAST_MESSAGE_TIMES: message_times
+            }
         }
         self.data.update(new_elem)
+        return new_elem

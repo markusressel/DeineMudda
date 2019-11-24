@@ -21,13 +21,14 @@ from telegram_click import generate_command_list
 from telegram_click.argument import Argument, Selection
 from telegram_click.decorator import command
 from telegram_click.permission import GROUP_ADMIN, PRIVATE_CHAT, GROUP_CREATOR
+from telegram_click.permission.base import Permission
 
 from deinemudda.antispam import AntiSpam
 from deinemudda.config import AppConfig
 from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS, \
     COMMAND_GET_SETTINGS, SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_ANTISPAM_ENABLED_KEY, \
     SETTINGS_ANTISPAM_ENABLED_DEFAULT, SETTINGS_TRIGGER_PROBABILITY_DEFAULT, COMMAND_VERSION, DEINE_MUDDA_VERSION, \
-    VOTE_BUTTON_ID_THUMBS_UP, VOTE_BUTTON_ID_THUMBS_DOWN
+    COMMAND_CONFIG, VOTE_BUTTON_ID_THUMBS_UP, VOTE_BUTTON_ID_THUMBS_DOWN
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.persistence.entity.chat import VoteMenu, VoteMenuItem
 from deinemudda.response import ResponseManager
@@ -36,6 +37,19 @@ from deinemudda.util import send_message, build_menu
 
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
+
+
+class _ConfigAdmins(Permission):
+
+    def __init__(self):
+        self._config = AppConfig()
+
+    def evaluate(self, update: Update, context: CallbackContext) -> bool:
+        from_user = update.effective_message.from_user
+        return from_user.username in self._config.TELEGRAM_ADMIN_USERNAMES.value
+
+
+CONFIG_ADMINS = _ConfigAdmins()
 
 
 class DeineMuddaBot:
@@ -64,6 +78,10 @@ class DeineMuddaBot:
                     COMMAND_VERSION,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
                     callback=self._version_command_callback),
+                CommandHandler(
+                    COMMAND_CONFIG,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._config_command_callback),
                 CommandHandler(
                     COMMAND_STATS,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
@@ -225,6 +243,12 @@ class DeineMuddaBot:
         from_user = update.message.from_user
         chat = self._persistence.get_chat(chat_id)
 
+        if len(update.message.text) not in self._config.CHAR_COUNT_RANGE.value:
+            return
+
+        if len(update.message.text.split()) not in self._config.WORD_COUNT_RANGE.value:
+            return
+
         response_message = self._response_manager.find_matching_rule(chat, from_user.first_name, update.message.text)
         if response_message:
             self._shout(bot, update.message, response_message)
@@ -265,7 +289,7 @@ class DeineMuddaBot:
     @command(
         name=COMMAND_COMMANDS,
         description="List commands supported by this bot.",
-        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
     def _commands_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
@@ -276,7 +300,7 @@ class DeineMuddaBot:
     @command(
         name=COMMAND_VERSION,
         description="Show application version.",
-        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
     def _version_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
@@ -286,9 +310,25 @@ class DeineMuddaBot:
         send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN, reply_to=message_id)
 
     @command(
+        name=COMMAND_CONFIG,
+        description="Show current application configuration.",
+        permissions=PRIVATE_CHAT & CONFIG_ADMINS
+    )
+    def _config_command_callback(self, update: Update, context: CallbackContext):
+        from container_app_conf.formatter.toml import TomlFormatter
+
+        bot = context.bot
+        chat_id = update.effective_message.chat_id
+        message_id = update.effective_message.message_id
+
+        text = self._config.print(formatter=TomlFormatter())
+        text = "```\n{}\n```".format(text)
+        send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN, reply_to=message_id)
+
+    @command(
         name=COMMAND_STATS,
         description="List bot statistics.",
-        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
     def _stats_command_callback(self, update: Update, context: CallbackContext) -> None:
         """
@@ -307,7 +347,7 @@ class DeineMuddaBot:
     @command(
         name=COMMAND_MUDDA,
         description="Trigger the bot manually.",
-        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
     def _mudda_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
@@ -320,7 +360,7 @@ class DeineMuddaBot:
     @command(
         name=COMMAND_GET_SETTINGS,
         description="Show settings for the current chat.",
-        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
     def _get_settings_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
@@ -353,7 +393,7 @@ class DeineMuddaBot:
                 validator=(lambda x: 0 <= x <= 1)
             )
         ],
-        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
     def _set_chance_command_callback(self, update: Update, context: CallbackContext, probability):
         bot = context.bot
@@ -376,7 +416,7 @@ class DeineMuddaBot:
                 allowed_values=["on", "off"]
             )
         ],
-        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
     def _set_antispam_command_callback(self, update: Update, context: CallbackContext, state: str):
         bot = context.bot

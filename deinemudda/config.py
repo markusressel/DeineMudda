@@ -13,37 +13,82 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from container_app_conf import Config
+from container_app_conf import ConfigBase
 from container_app_conf.entry.int import IntConfigEntry
+from container_app_conf.entry.list import ListConfigEntry
+from container_app_conf.entry.range import RangeConfigEntry
 from container_app_conf.entry.string import StringConfigEntry
+from container_app_conf.source.env_source import EnvSource
+from container_app_conf.source.yaml_source import YamlSource
 
 from deinemudda.const import CONFIG_NODE_ROOT, CONFIG_NODE_TELEGRAM, DEFAULT_SQL_PERSISTENCE_URL, \
-    CONFIG_NODE_PERSISTENCE, CONFIG_NODE_STATS, CONFIG_NODE_PORT, CONFIG_NODE_VOTING
+    CONFIG_NODE_PERSISTENCE, CONFIG_NODE_STATS, CONFIG_NODE_PORT, CONFIG_NODE_BEHAVIOUR, CONFIG_NODE_WORD_COUNT_RANGE, \
+    CONFIG_NODE_CHAR_COUNT_RANGE, CONFIG_NODE_VOTING
 
 
-class AppConfig(Config):
+class AppConfig(ConfigBase):
 
-    @property
-    def config_file_names(self) -> [str]:
-        return ["deinemudda"]
+    def __new__(cls, *args, **kwargs):
+        yaml_source = YamlSource("deinemudda")
+        data_sources = [
+            EnvSource(),
+            yaml_source
+        ]
+        return super(AppConfig, cls).__new__(cls, data_sources=data_sources)
 
     TELEGRAM_BOT_TOKEN = StringConfigEntry(
-        yaml_path=[
+        key_path=[
             CONFIG_NODE_ROOT,
             CONFIG_NODE_TELEGRAM,
             "bot_token"
-        ])
+        ],
+        required=True,
+        secret=True,
+        example="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+    )
+
+    TELEGRAM_ADMIN_USERNAMES = ListConfigEntry(
+        item_type=StringConfigEntry,
+        key_path=[
+            CONFIG_NODE_ROOT,
+            CONFIG_NODE_TELEGRAM,
+            "admin_usernames"
+        ],
+        default=[],
+        example=[
+            "myadminuser",
+            "myotheradminuser"
+        ]
+    )
 
     SQL_PERSISTENCE_URL = StringConfigEntry(
-        yaml_path=[
+        key_path=[
             CONFIG_NODE_ROOT,
             CONFIG_NODE_PERSISTENCE,
             "url"
         ],
         default=DEFAULT_SQL_PERSISTENCE_URL)
 
+    WORD_COUNT_RANGE = RangeConfigEntry(
+        key_path=[
+            CONFIG_NODE_ROOT,
+            CONFIG_NODE_BEHAVIOUR,
+            CONFIG_NODE_WORD_COUNT_RANGE
+        ],
+        default="[1..10]"
+    )
+
+    CHAR_COUNT_RANGE = RangeConfigEntry(
+        key_path=[
+            CONFIG_NODE_ROOT,
+            CONFIG_NODE_BEHAVIOUR,
+            CONFIG_NODE_CHAR_COUNT_RANGE
+        ],
+        default="[3..255]"
+    )
+
     STATS_PORT = IntConfigEntry(
-        yaml_path=[
+        key_path=[
             CONFIG_NODE_ROOT,
             CONFIG_NODE_STATS,
             CONFIG_NODE_PORT
