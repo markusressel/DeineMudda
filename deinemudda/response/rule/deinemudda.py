@@ -29,7 +29,6 @@ class GenitiveRule(ResponseRule):
 
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
-            chat = self._persistence.get_chat(chat.id)
             user = choice(chat.users)
             return "von {}'s mudda".format(user.first_name)
         else:
@@ -45,7 +44,6 @@ class DativRule(ResponseRule):
 
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
-            chat = self._persistence.get_chat(chat.id)
             user = choice(chat.users)
             return "{}'s mudda".format(user.first_name)
         else:
@@ -61,7 +59,6 @@ class WhoGermanRule(ResponseRule):
 
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
-            chat = self._persistence.get_chat(chat.id)
             user = choice(chat.users)
             return "{}'s mudda".format(user.first_name)
         else:
@@ -123,7 +120,6 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
             dice = randint(0, 2)
 
             if dice == 0:
-                chat = self._persistence.get_chat(chat.id)
                 user = choice(chat.users)
                 return "{}'s mudda is' {}".format(user.first_name, word)
             elif dice == 1:

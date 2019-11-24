@@ -15,13 +15,10 @@
 
 from abc import abstractmethod
 
-from deinemudda.persistence import Persistence, Chat
+from deinemudda.persistence import Chat
 
 
 class ResponseRule:
-
-    def __init__(self, persistence: Persistence):
-        self._persistence = persistence
 
     @property
     @abstractmethod
