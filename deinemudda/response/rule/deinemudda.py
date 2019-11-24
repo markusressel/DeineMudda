@@ -20,8 +20,23 @@ from deinemudda.persistence import Chat
 from deinemudda.response.rule import ResponseRule
 
 
-class GenitiveRule(ResponseRule):
+class GenitiveFirstRule(ResponseRule):
     __id__ = "GenitiveRule"
+    __description__ = "Respond to 'wen' questions in german"
+
+    def matches(self, message: str) -> bool:
+        return re.search(r"(^| )(wen)(| (.)+)", message, re.IGNORECASE) is not None
+
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
+        if randint(0, 3) == 3:
+            user = choice(chat.users)
+            return "{}'s mudda".format(user.first_name)
+        else:
+            return 'deine mudda'
+
+
+class GenitiveSecondRule(ResponseRule):
+    __id__ = "GenitiveSecondRule"
     __description__ = "Respond to 'wessen' questions in german"
 
     def matches(self, message: str) -> bool:
@@ -106,7 +121,7 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
     __description__ = "Adjective counter intelligence"
 
     def matches(self, message: str) -> bool:
-        # we need to do the parsetreecalculation anyway so
+        # we need to do the parsetree calculation anyway so
         # there is no need to check this first
         return True
 
