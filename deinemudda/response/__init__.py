@@ -36,14 +36,15 @@ class ResponseManager:
         self._persistence: Persistence = persistence
         self.response_rules: [ResponseRule] = self._find_rules()
 
-    def _find_rules(self):
+    @staticmethod
+    def _find_rules():
         """
         :return: list of rules
         """
         from deinemudda.response import rule
         rule_classes = util.find_implementations(ResponseRule, rule)
         # construct implementations
-        rule_instances = list(map(lambda x: x(self._persistence), rule_classes))
+        rule_instances = list(map(lambda x: x(), rule_classes))
         return sorted(rule_instances, key=lambda x: x.__priority__, reverse=True)
 
     def find_matching_rule(self, chat: Chat, sender: str, message: str) -> str or None:
