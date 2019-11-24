@@ -83,3 +83,16 @@ class RuleTest(TestBase):
 
         for match in positive_samples:
             self.assertTrue(rule.matches(match))
+
+    def test_adjective_counter_intelligence_rule(self):
+        from deinemudda.response.rule.deinemudda import AdjectiveCounterIntelligenceRule
+        rule = AdjectiveCounterIntelligenceRule()
+
+        positive_samples = [
+            "Das ist ja dumm",
+            "Du bist sehr schön",
+            "Das könnte gefährlich werden!",
+        ]
+
+        for match in positive_samples:
+            self.assertTrue(rule.matches(match))
