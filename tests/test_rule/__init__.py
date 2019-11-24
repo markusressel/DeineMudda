@@ -91,7 +91,10 @@ class RuleTest(TestBase):
         positive_samples = [
             "Das ist ja dumm",
             "Du bist sehr schön",
-            "Das könnte gefährlich werden!",
+            "Du bist fett",
+            "Du bist dumm",
+            "Du bist doof",
+            "Du bist geil",
         ]
 
         for match in positive_samples:
