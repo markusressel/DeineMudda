@@ -97,7 +97,7 @@ class AppConfig(ConfigBase):
     )
 
     VOTING_ENABLED = IntConfigEntry(
-        yaml_path=[
+        key_path=[
             CONFIG_NODE_ROOT,
             CONFIG_NODE_VOTING
         ],
