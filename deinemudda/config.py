@@ -14,6 +14,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from container_app_conf import ConfigBase
+from container_app_conf.entry.bool import BoolConfigEntry
 from container_app_conf.entry.int import IntConfigEntry
 from container_app_conf.entry.list import ListConfigEntry
 from container_app_conf.entry.range import RangeConfigEntry
@@ -96,7 +97,7 @@ class AppConfig(ConfigBase):
         default=8000
     )
 
-    VOTING_ENABLED = IntConfigEntry(
+    VOTING_ENABLED = BoolConfigEntry(
         key_path=[
             CONFIG_NODE_ROOT,
             CONFIG_NODE_VOTING

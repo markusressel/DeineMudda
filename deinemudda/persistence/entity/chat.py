@@ -93,19 +93,7 @@ class VoteMenu(Base):
         :param user_id: id of the user that is voting
         :param item_id: id of the item to vote for
         """
-        items = list(filter(lambda x: x.id == item_id, self.items))
-        if len(items) > 0:
-            item = items[0]
-            voters = list(filter(lambda x: x.user_id == user_id, item.voters))
-            if len(voters) > 0:
-                voter = voters[0]
-                voter.count += 1
-            else:
-                voter = VoteMenuItemVoter(user_id=user_id, count=1)
-                item.voters.append(voter)
-        else:
-            raise ValueError(
-                "VoteMenuItem with id '{}' not found in VoteMenu of message {}".format(item_id, self.message_id))
+        self._set_votes(user_id, item_id, 1)
 
     def revoke_vote(self, user_id: int, item_id: str):
         """
@@ -113,16 +101,20 @@ class VoteMenu(Base):
         :param user_id: id of the user that is voting
         :param item_id: id of the item to vote for
         """
+        self._set_votes(user_id, item_id, 0)
+
+    def _set_votes(self, user_id: int, item_id: str, amount: int):
         items = list(filter(lambda x: x.id == item_id, self.items))
         if len(items) > 0:
             item = items[0]
             voters = list(filter(lambda x: x.user_id == user_id, item.voters))
             if len(voters) > 0:
                 voter = voters[0]
-                voter.count -= 1
+                voter.count = amount
             else:
-                voter = VoteMenuItemVoter(user_id, count=1)
+                voter = VoteMenuItemVoter(user_id=user_id, count=amount)
                 item.voters.append(voter)
+
             # filter out users without votes
             item.voters = list(filter(lambda x: x.count <= 0, item.voters))
         else:

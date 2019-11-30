@@ -158,7 +158,9 @@ class DeineMuddaBot:
         if show_vote_menu and self._config.VOTING_ENABLED.value:
             # persist the vote menu with its id
 
-            # TODO: to be usefull it would be necessary to know what the
+            trigger_text = message.text
+
+            # TODO: to be useful it would be necessary to know what the
             # initial message was that the bot responded to,
             # or more precisely, which response rule responded to the mentioned input
             # and what output it produced
