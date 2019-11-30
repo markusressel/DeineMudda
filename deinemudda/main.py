@@ -17,6 +17,8 @@ import logging
 import os
 import sys
 
+from container_app_conf.formatter.toml import TomlFormatter
+
 parent_dir = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", ".."))
 sys.path.append(parent_dir)
 
@@ -33,6 +35,7 @@ if __name__ == '__main__':
     from deinemudda.persistence import Persistence
 
     config = AppConfig()
+    LOGGER.debug("Config:\n{}".format(config.print(TomlFormatter())))
 
     # start prometheus server
     start_http_server(config.STATS_PORT.value)
