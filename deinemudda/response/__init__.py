@@ -77,11 +77,18 @@ class ResponseManager:
             if response_rule.matches(message):
                 response = response_rule.get_response(chat, sender, normalized_message)
 
-                # TODO: use voting results to decide if this response should be used or discarded
+                if not response:
+                    continue
 
-                if response:
-                    RESPONSES_COUNT.labels(chat_id=chat.id, rule=response_rule.__id__).inc()
-                    return response
+                if self._response_is_bad(message, response):
+                    # omit this response since we know users won't like it
+                    continue
+
+                RESPONSES_COUNT.labels(chat_id=chat.id, rule=response_rule.__id__).inc()
+                return response
+
+    def _response_is_bad(self, message: str, response: str) -> bool:
+        return self._persistence.is_response_bad(message, response)
 
     @staticmethod
     def _normalize(message: str):
@@ -118,3 +125,6 @@ class ResponseManager:
             if positive_votes < negative_votes:
                 LOGGER.debug(
                     f"Response was voted BAD (+{positive_votes} vs -{negative_votes}) by {total_votes}/{chat_user_count} users known in chat {chat.id}")
+                # TODO: find out what the message was that we responded to
+                # TODO: find out what the response was
+                # TODO: remember that this response is not good

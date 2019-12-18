@@ -110,6 +110,10 @@ class Persistence:
             session.add(user)
         self._update_stats()
 
+    def is_response_bad(self, message: str, response: str) -> bool:
+        # TODO: check if message/response combo is marked as bad
+        return False
+
     def _update_stats(self):
         with self._session_scope() as session:
             chat_count = session.query(Chat).count()
