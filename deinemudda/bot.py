@@ -224,8 +224,7 @@ class DeineMuddaBot:
                 bot.answer_callback_query(query_id, text="Unknown message, cant vote")
                 return
 
-            # register and persist vote
-            # TODO: allow user to revoke their voting
+            # register and persist vote (or revoke it)
             vote_menu.vote(user_id, selection_data)
             self._persistence.add_or_update_chat(chat_entity)
 
