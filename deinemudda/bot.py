@@ -228,6 +228,11 @@ class DeineMuddaBot:
             vote_menu.vote(user_id, selection_data)
             self._persistence.add_or_update_chat(chat_entity)
 
+            # get new instance of persisted chat
+            chat_entity = self._persistence.get_chat(chat_entity.id)
+            vote_menu = chat_entity.get_vote_menu(message_id)
+            self._response_manager.evaluate(chat_entity, vote_menu)
+
             menu_markup = self._build_vote_menu(vote_menu.items)
 
             query.edit_message_reply_markup(reply_markup=menu_markup)
