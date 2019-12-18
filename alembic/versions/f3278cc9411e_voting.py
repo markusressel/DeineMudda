@@ -1,15 +1,15 @@
-"""vote
+"""Voting
 
-Revision ID: 8c8e207a733d
-Revises: 4234af1808b8
-Create Date: 2019-08-24 05:58:10.909414
+Revision ID: f3278cc9411e
+Revises: cd9e7376fc77
+Create Date: 2019-12-18 21:03:51.585813
 
 """
 import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '8c8e207a733d'
+revision = 'f3278cc9411e'
 down_revision = 'cd9e7376fc77'
 branch_labels = None
 depends_on = None
@@ -34,7 +34,7 @@ def upgrade():
                     )
     op.create_table('vote_menu_item_voters',
                     sa.Column('id', sa.Integer(), nullable=False),
-                    sa.Column('vote_menu_item_id', sa.Integer(), nullable=True),
+                    sa.Column('vote_menu_item_id', sa.String(), nullable=True),
                     sa.Column('user_id', sa.Integer(), nullable=True),
                     sa.Column('count', sa.Integer(), nullable=True),
                     sa.ForeignKeyConstraint(['vote_menu_item_id'], ['vote_menu_items.id'], ),

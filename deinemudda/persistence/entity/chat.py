@@ -42,7 +42,7 @@ class VoteMenuItemVoter(Base):
     __table_args__ = (UniqueConstraint('vote_menu_item_id', 'user_id', name='_vote_menu_item_voter_uc'),)
 
     id = Column(Integer, primary_key=True)
-    vote_menu_item_id = Column(Integer, ForeignKey('vote_menu_items.id'))
+    vote_menu_item_id = Column(String, ForeignKey('vote_menu_items.id'))
     vote_menu_item = relationship("VoteMenuItem", back_populates="voters")
 
     user_id = Column(Integer)
