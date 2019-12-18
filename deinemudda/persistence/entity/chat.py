@@ -115,8 +115,8 @@ class VoteMenu(Base):
                 voter = VoteMenuItemVoter(user_id=user_id, count=amount)
                 item.voters.append(voter)
 
-            # filter out users without votes
-            item.voters = list(filter(lambda x: x.count <= 0, item.voters))
+            # filter out users without votes (keep those with votes)
+            item.voters = list(filter(lambda x: x.count > 0, item.voters))
         else:
             raise ValueError(
                 "VoteMenuItem with id '{}' not found in VoteMenu of message {}".format(item_id, self.message_id))
