@@ -110,7 +110,10 @@ class VoteMenu(Base):
             voters = list(filter(lambda x: x.user_id == user_id, item.voters))
             if len(voters) > 0:
                 voter = voters[0]
-                voter.count = amount
+                if voter.count > 0:
+                    voter.count = 0
+                else:
+                    voter.count = amount
             else:
                 voter = VoteMenuItemVoter(user_id=user_id, count=amount)
                 item.voters.append(voter)
