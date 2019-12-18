@@ -18,8 +18,10 @@ import re
 from random import random
 
 from deinemudda import util
-from deinemudda.const import SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_TRIGGER_PROBABILITY_DEFAULT
+from deinemudda.const import SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_TRIGGER_PROBABILITY_DEFAULT, \
+    VOTE_BUTTON_ID_THUMBS_UP, VOTE_BUTTON_ID_THUMBS_DOWN
 from deinemudda.persistence import Persistence, Chat
+from deinemudda.persistence.entity.chat import VoteMenu
 from deinemudda.response.rule import ResponseRule
 from deinemudda.stats import RESPONSES_COUNT
 
@@ -95,3 +97,24 @@ class ResponseManager:
         # remove all characters from the message except the given ones
         normalized_message = re.sub('[^a-z0-9äöüß| ?]+', '', normalized_message)
         return normalized_message
+
+    def evaluate(self, chat: Chat, vote_menu: VoteMenu):
+        """
+        Evaluates a vote menu to learn from it
+        :param chat: the chat
+        :param vote_menu: the vote menu
+        """
+        chat_user_count = len(chat.users)
+
+        positive_votes = vote_menu.item_count(VOTE_BUTTON_ID_THUMBS_UP)
+        negative_votes = vote_menu.item_count(VOTE_BUTTON_ID_THUMBS_DOWN)
+        total_votes = positive_votes + negative_votes
+
+        if total_votes < (chat_user_count / 3):
+            LOGGER.debug(
+                f"Not enough votes ({total_votes}/{chat_user_count}) for meaningful result from vote menu {vote_menu.id} in chat {chat.id}")
+            return
+        else:
+            if positive_votes < negative_votes:
+                LOGGER.debug(
+                    f"Response was voted BAD (+{positive_votes} vs -{negative_votes}) by {total_votes}/{chat_user_count} users known in chat {chat.id}")

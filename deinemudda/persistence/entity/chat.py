@@ -12,6 +12,8 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+import functools
+import operator
 
 from sqlalchemy import Column, Integer, ForeignKey, String, Table, UniqueConstraint
 from sqlalchemy.orm import relationship
@@ -102,6 +104,16 @@ class VoteMenu(Base):
         :param item_id: id of the item to vote for
         """
         self._set_votes(user_id, item_id, 0)
+
+    def item_count(self, item_id: str) -> int:
+        """
+        Get vote count of a specific menu item
+        :param item_id:
+        :return: count
+        """
+        voters = list(map(lambda x: x.voters, filter(lambda x: x.id == item_id, self.items)))
+        voters = functools.reduce(operator.iconcat, voters, [])
+        return sum(map(lambda x: x.count, voters))
 
     def _set_votes(self, user_id: int, item_id: str, amount: int):
         items = list(filter(lambda x: x.id == item_id, self.items))
