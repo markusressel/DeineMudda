@@ -1,0 +1,9 @@
+stages:
+- name: docker-build
+  steps:
+  - publishImageConfig:
+      dockerfilePath: ./Dockerfile
+      buildContext: .
+      tag: markusressel/deinemudda:latest
+timeout: 60
+notification: {}
