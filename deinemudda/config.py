@@ -67,7 +67,8 @@ class AppConfig(ConfigBase):
             CONFIG_NODE_PERSISTENCE,
             "url"
         ],
-        default=DEFAULT_SQL_PERSISTENCE_URL)
+        default=DEFAULT_SQL_PERSISTENCE_URL,
+        secret=True)
 
     WORD_COUNT_RANGE = RangeConfigEntry(
         key_path=[
