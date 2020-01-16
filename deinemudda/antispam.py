@@ -95,7 +95,7 @@ class AntiSpam:
                     LOGGER.debug("Kicked: {}".format(kicked))
                 except Exception as ex:
                     LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
-                self.ban_user(from_user.id)
+                self.set_user_ban(from_user.id, True)
                 LOGGER.debug(f"Banned user {from_user.id} because of excessive spam")
 
         return is_spam
@@ -124,22 +124,14 @@ class AntiSpam:
         user_entity.last_timeout = datetime.datetime.now()
         self._persistence.add_or_update_user(user_entity)
 
-    def ban_user(self, user_id: int):
+    def set_user_ban(self, user_id: int, banned: bool):
         """
         Ban a specific user
         :param user_id: the user id
+        :param banned: true is banned, false is unbanned
         """
         user_entity = self._persistence.get_user(user_id)
-        user_entity.is_banned = True
-        self._persistence.add_or_update_user(user_entity)
-
-    def unban_user(self, user_id: int):
-        """
-        Un-Ban a specific user
-        :param user_id: the user id
-        """
-        user_entity = self._persistence.get_user(user_id)
-        user_entity.is_banned = False
+        user_entity.is_banned = banned
         self._persistence.add_or_update_user(user_entity)
 
     def _update_data(self, user_id: int) -> dict:
