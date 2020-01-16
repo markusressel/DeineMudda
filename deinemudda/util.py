@@ -13,10 +13,10 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from telegram import Bot
+from telegram import Bot, Message
 
 
-def send_message(bot: Bot, chat_id: str, message: str, parse_mode: str = None, reply_to: int = None):
+def send_message(bot: Bot, chat_id: str, message: str, parse_mode: str = None, reply_to: int = None) -> Message:
     """
     Sends a text message to the given chat
     :param bot: the bot
@@ -28,7 +28,7 @@ def send_message(bot: Bot, chat_id: str, message: str, parse_mode: str = None, r
     from emoji import emojize
 
     emojized_text = emojize(message, use_aliases=True)
-    bot.send_message(chat_id=chat_id, parse_mode=parse_mode, text=emojized_text, reply_to_message_id=reply_to)
+    return bot.send_message(chat_id=chat_id, parse_mode=parse_mode, text=emojized_text, reply_to_message_id=reply_to)
 
 
 def import_submodules(package, recursive=True) -> dict:
