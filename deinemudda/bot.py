@@ -149,6 +149,7 @@ class DeineMuddaBot:
             self._persistence.add_or_update_chat(chat)
 
         # remember chat user
+        chat = self._persistence.get_chat(chat_id)
         self._persistence.add_or_update_chat_member(chat, from_user)
 
     @MESSAGE_TIME.time()
