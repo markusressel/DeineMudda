@@ -71,12 +71,14 @@ class AntiSpam:
 
         # check if the user is banned
         if user_entity.is_banned:
+            LOGGER.debug(f"Ignoring message from BANNED user {from_user.id}")
             return True
 
         # check if the user has a timeout
         now = datetime.datetime.now()
         if user_entity.last_timeout is not None and user_entity.last_timeout >= now - datetime.timedelta(
                 seconds=self._user_timeout_duration):
+            LOGGER.debug(f"Ignoring message from TIMEOUTED user {from_user.id}")
             return True
 
         # check if the message is spam
@@ -86,6 +88,7 @@ class AntiSpam:
             if user_entity.last_timeout is None or user_entity.last_timeout < now - datetime.timedelta(
                     seconds=self._user_timeout_duration):
                 self.timeout_user(from_user.id)
+                LOGGER.debug(f"Timeouted user {from_user.id} for {self._user_timeout_duration} seconds")
             else:
                 try:
                     kicked = bot.kickChatMember(chat_id, from_user.id)
@@ -93,6 +96,7 @@ class AntiSpam:
                 except Exception as ex:
                     LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
                 self.ban_user(from_user.id)
+                LOGGER.debug(f"Banned user {from_user.id} because of excessive spam")
 
         return is_spam
 
