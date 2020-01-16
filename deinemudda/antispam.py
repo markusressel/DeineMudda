@@ -41,7 +41,7 @@ class AntiSpam:
         self._persistence = persistence
 
         self._spam_time_window = datetime.timedelta(seconds=1)
-        self._spam_message_amount = 1
+        self._spam_message_amount = 5
         self._user_timeout_duration = 30
 
     def _enabled(self, chat_id: int) -> bool:
@@ -80,22 +80,21 @@ class AntiSpam:
             return True
 
         # check if the message is spam
-        if not self._is_spam(update, context):
-            return False
+        is_spam = self._is_spam(update, context)
 
-        # check how long ago the last timeout was
-        if user_entity.last_timeout is None or user_entity.last_timeout < now - datetime.timedelta(
-                seconds=self._user_timeout_duration):
-            self.timeout_user(from_user.id)
-        else:
-            try:
-                kicked = bot.kickChatMember(chat_id, from_user.id)
-                LOGGER.debug("Kicked: {}".format(kicked))
-            except Exception as ex:
-                LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
-            self.ban_user(from_user.id)
+        if is_spam:
+            if user_entity.last_timeout is None or user_entity.last_timeout < now - datetime.timedelta(
+                    seconds=self._user_timeout_duration):
+                self.timeout_user(from_user.id)
+            else:
+                try:
+                    kicked = bot.kickChatMember(chat_id, from_user.id)
+                    LOGGER.debug("Kicked: {}".format(kicked))
+                except Exception as ex:
+                    LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
+                self.ban_user(from_user.id)
 
-        return True
+        return is_spam
 
     def _is_spam(self, update: Update, context: CallbackContext) -> bool:
         """
