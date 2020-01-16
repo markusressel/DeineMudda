@@ -40,9 +40,9 @@ class AntiSpam:
         self._config = config
         self._persistence = persistence
 
-        self._spam_time_window = datetime.timedelta(seconds=1)
-        self._spam_message_amount = 5
         self._user_timeout_duration = 30
+        self._spam_time_window = datetime.timedelta(seconds=self._user_timeout_duration)
+        self._spam_message_amount = 5
 
     def _enabled(self, chat_id: int) -> bool:
         chat = self._persistence.get_chat(chat_id)
@@ -143,7 +143,7 @@ class AntiSpam:
             message_times = old_elem[KEY_LAST_MESSAGE_TIMES]
 
         # remove message times outside interesting window
-        message_times = list(filter(lambda x: x < (latest_message_time - self._spam_time_window), message_times))
+        message_times = list(filter(lambda x: x > (latest_message_time - self._spam_time_window), message_times))
         message_times.append(latest_message_time)
 
         new_elem = {
