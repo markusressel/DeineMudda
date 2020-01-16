@@ -83,7 +83,7 @@ class DeineMuddaBot:
                     callback=self._stats_command_callback),
                 CommandHandler(
                     COMMAND_MUDDA,
-                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    filters=(~ Filters.forwarded),
                     callback=self._mudda_command_callback),
                 CommandHandler(
                     COMMAND_GET_SETTINGS,
@@ -123,12 +123,24 @@ class DeineMuddaBot:
         """
         self._updater.stop()
 
-    def _shout(self, bot: Bot, message, text: str, reply: bool = True):
+    def _shout(self, bot: Bot, message, text: str, reply: bool or int = True):
+        """
+        Shouts a message into the given chat
+        :param bot: bot object
+        :param message: message object
+        :param text: text to shout
+        :param reply: True to reply to the message's user, int to reply to a specific message, False is no reply
+        """
         shouting_text = "<b>{}!!!</b>".format(text.upper())
 
         reply_to_message_id = None
         if reply:
-            reply_to_message_id = message.message_id
+            if isinstance(reply, bool):
+                reply_to_message_id = message.message_id
+            elif isinstance(reply, int):
+                reply_to_message_id = reply
+            else:
+                raise AttributeError(f"Unsupported reply parameter: {reply}")
 
         send_message(bot, message.chat_id,
                      message=shouting_text,
@@ -272,7 +284,21 @@ class DeineMuddaBot:
             return
 
         text = "deine mudda"
-        self._shout(bot, update.message, text, reply=False)
+
+        reply_to_message = update.message.reply_to_message
+        if reply_to_message is not None:
+            if not reply_to_message.from_user.is_bot \
+                    and reply_to_message.from_user.id != update.message.from_user.id:
+                reply = reply_to_message.message_id
+            else:
+                # ignore reply
+                LOGGER.debug(
+                    f"Ignoring /mudda call on reply to message {reply_to_message.message_id}: {reply_to_message.text}")
+                return
+        else:
+            reply = False
+
+        self._shout(bot, update.message, text, reply=reply)
 
     @command(
         name=COMMAND_GET_SETTINGS,
