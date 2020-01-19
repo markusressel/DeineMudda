@@ -25,10 +25,7 @@ from telegram_click.permission.base import Permission
 
 from deinemudda.antispam import AntiSpam
 from deinemudda.config import AppConfig
-from deinemudda.const import COMMAND_MUDDA, COMMAND_SET_ANTISPAM, COMMAND_SET_CHANCE, COMMAND_COMMANDS, COMMAND_STATS, \
-    COMMAND_GET_SETTINGS, SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_ANTISPAM_ENABLED_KEY, \
-    SETTINGS_ANTISPAM_ENABLED_DEFAULT, SETTINGS_TRIGGER_PROBABILITY_DEFAULT, COMMAND_VERSION, DEINE_MUDDA_VERSION, \
-    COMMAND_CONFIG
+from deinemudda.const import *
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.response import ResponseManager
 from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT, format_metrics
@@ -85,6 +82,18 @@ class DeineMuddaBot:
                     COMMAND_MUDDA,
                     filters=(~ Filters.forwarded),
                     callback=self._mudda_command_callback),
+                CommandHandler(
+                    COMMAND_LIST_USERS,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._list_users_command_callback),
+                CommandHandler(
+                    COMMAND_BAN,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._ban_command_callback),
+                CommandHandler(
+                    COMMAND_UNBAN,
+                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                    callback=self._unban_command_callback),
                 CommandHandler(
                     COMMAND_GET_SETTINGS,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
@@ -371,3 +380,92 @@ class DeineMuddaBot:
         self._persistence.add_or_update_chat(chat)
 
         send_message(bot, chat_id, message="Antispam: {}".format(new_state), reply_to=message_id)
+
+    @command(
+        name=COMMAND_LIST_USERS,
+        description="List all known users in this chat",
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
+    def _list_users_command_callback(self, update: Update, context: CallbackContext):
+        bot = context.bot
+        chat_id = update.effective_message.chat_id
+        message_id = update.effective_message.message_id
+
+        chat = self._persistence.get_chat(chat_id)
+        message = "\n".join(
+            list(map(lambda x: f"{x.id}: {x.username}" + (" (BANNED)" if x.is_banned else ""), chat.users)))
+
+        send_message(bot, chat_id, message=message, reply_to=message_id)
+
+    @command(
+        name=COMMAND_BAN,
+        description="Ban a user",
+        arguments=[
+            Argument(
+                name=["user"],
+                description="Username or user id",
+                type=str,
+                example="123456789",
+            )
+        ],
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
+    def _ban_command_callback(self, update: Update, context: CallbackContext, user: str):
+        bot = context.bot
+        chat_id = update.effective_message.chat_id
+        message_id = update.effective_message.message_id
+
+        try:
+            user_id = int(user)
+            user_entity = self._persistence.get_user(user_id)
+        except:
+            user_entity = self._persistence.get_user_by_username(user)
+
+        if user_entity is None:
+            send_message(bot, chat_id, message=f"User {user} is unknown", reply_to=message_id)
+            return
+
+        user_id = user_entity.id
+        username = user_entity.username
+        user_entity.is_banned = True
+        self._persistence.add_or_update_user(user_entity)
+
+        send_message(bot, chat_id, message=f"Banned user: {username} ({user_id})",
+                     reply_to=message_id)
+
+    @command(
+        name=COMMAND_UNBAN,
+        description="Unban a banned user",
+        arguments=[
+            Argument(
+                name=["user"],
+                description="Username or user id",
+                type=str,
+                example="123456789",
+            )
+        ],
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
+    def _unban_command_callback(self, update: Update, context: CallbackContext, user: str):
+        bot = context.bot
+        chat_id = update.effective_message.chat_id
+        message_id = update.effective_message.message_id
+
+        try:
+            user_id = int(user)
+            user_entity = self._persistence.get_user(user_id)
+        except:
+            user_entity = self._persistence.get_user_by_username(user)
+
+        if user_entity is None:
+            send_message(bot, chat_id, message=f"User {user} is unknown", reply_to=message_id)
+            return
+
+        user_id = user_entity.id
+        username = user_entity.username
+        user_entity.is_banned = False
+        self._persistence.add_or_update_user(user_entity)
+
+        send_message(bot, chat_id,
+                     message=f"Unbanned user: {username} ({user_id})",
+                     reply_to=message_id)

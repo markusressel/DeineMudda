@@ -105,6 +105,10 @@ class Persistence:
         with self._session_scope() as session:
             return session.query(User).get(entity_id)
 
+    def get_user_by_username(self, username: str) -> User or None:
+        with self._session_scope() as session:
+            return session.query(User).filter_by(username=username).one_or_none()
+
     def add_or_update_user(self, user: User) -> None:
         with self._session_scope(write=True) as session:
             session.add(user)
