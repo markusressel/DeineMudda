@@ -34,6 +34,11 @@ COMMAND_VERSION = ['version', 'v']
 COMMAND_CONFIG = ['config', 'c']
 COMMAND_STATS = 'stats'
 COMMAND_MUDDA = 'mudda'
+
+COMMAND_LIST_USERS = ['users', 'u']
+COMMAND_BAN = ['ban', 'b']
+COMMAND_UNBAN = ['unban', 'ub']
+
 COMMAND_GET_SETTINGS = ['settings', 's']
 COMMAND_SET_ANTISPAM = 'set_antispam'
 COMMAND_SET_CHANCE = 'set_chance'
