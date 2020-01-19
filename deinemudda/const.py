@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-DEINE_MUDDA_VERSION = "1.3.6"
+DEINE_MUDDA_VERSION = "1.3.7"
 
 CONFIG_NODE_ROOT = "deinemudda"
 CONFIG_NODE_TELEGRAM = "telegram"
@@ -36,6 +36,11 @@ COMMAND_VERSION = ['version', 'v']
 COMMAND_CONFIG = ['config', 'c']
 COMMAND_STATS = 'stats'
 COMMAND_MUDDA = 'mudda'
+
+COMMAND_LIST_USERS = ['users', 'u']
+COMMAND_BAN = ['ban', 'b']
+COMMAND_UNBAN = ['unban', 'ub']
+
 COMMAND_GET_SETTINGS = ['settings', 's']
 COMMAND_SET_ANTISPAM = 'set_antispam'
 COMMAND_SET_CHANCE = 'set_chance'
