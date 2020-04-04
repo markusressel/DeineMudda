@@ -20,8 +20,21 @@ from deinemudda.persistence import Chat
 from deinemudda.response.rule import ResponseRule
 
 
-class GenitiveRule(ResponseRule):
-    __id__ = "GenitiveRule"
+class GenitiveFirstRule(ResponseRule):
+    __description__ = "Respond to 'wen' questions in german"
+
+    def matches(self, message: str) -> bool:
+        return re.search(r"(^| )(wen)(\?| (.)+)", message, re.IGNORECASE) is not None
+
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
+        if randint(0, 3) == 3:
+            user = choice(chat.users)
+            return "{}'s mudda".format(user.first_name)
+        else:
+            return 'deine mudda'
+
+
+class GenitiveSecondRule(ResponseRule):
     __description__ = "Respond to 'wessen' questions in german"
 
     def matches(self, message: str) -> bool:
@@ -29,7 +42,6 @@ class GenitiveRule(ResponseRule):
 
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
-            chat = self._persistence.get_chat(chat.id)
             user = choice(chat.users)
             return "von {}'s mudda".format(user.first_name)
         else:
@@ -37,7 +49,6 @@ class GenitiveRule(ResponseRule):
 
 
 class DativRule(ResponseRule):
-    __id__ = "DativRule"
     __description__ = "Respond to 'wem' questions in german"
 
     def matches(self, message: str) -> bool:
@@ -45,7 +56,6 @@ class DativRule(ResponseRule):
 
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
-            chat = self._persistence.get_chat(chat.id)
             user = choice(chat.users)
             return "{}'s mudda".format(user.first_name)
         else:
@@ -53,7 +63,6 @@ class DativRule(ResponseRule):
 
 
 class WhoGermanRule(ResponseRule):
-    __id__ = "WhoGermanRule"
     __description__ = "Respond to 'who' questions in german"
 
     def matches(self, message: str) -> bool:
@@ -61,7 +70,6 @@ class WhoGermanRule(ResponseRule):
 
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
-            chat = self._persistence.get_chat(chat.id)
             user = choice(chat.users)
             return "{}'s mudda".format(user.first_name)
         else:
@@ -69,7 +77,6 @@ class WhoGermanRule(ResponseRule):
 
 
 class WhoEnglishRule(ResponseRule):
-    __id__ = "WhoEnglishRule"
     __description__ = "Respond to 'who' questions in english"
 
     def matches(self, message: str) -> bool:
@@ -80,7 +87,6 @@ class WhoEnglishRule(ResponseRule):
 
 
 class WhyRule(ResponseRule):
-    __id__ = "WhyRule"
     __description__ = "Respond to 'why' questions"
 
     def matches(self, message: str) -> bool:
@@ -91,7 +97,6 @@ class WhyRule(ResponseRule):
 
 
 class ReflectCounterIntelligenceRule(ResponseRule):
-    __id__ = "ReflectCounterIntelligenceRule"
     __description__ = "Respond to messages containing phrases similar to 'your mother'"
 
     regex = r"^dei(ne)? (mudda|mutter|mama)"
@@ -105,25 +110,55 @@ class ReflectCounterIntelligenceRule(ResponseRule):
 
 
 class AdjectiveCounterIntelligenceRule(ResponseRule):
-    __id__ = "AdjectiveCounterIntelligenceRule"
     __description__ = "Adjective counter intelligence"
 
-    def matches(self, message: str) -> bool:
-        # we need to do the parsetreecalculation anyway so
-        # there is no need to check this first
-        return True
+    match_cache = {}
 
-    def get_response(self, chat: Chat, sender: int, message: str) -> str or None:
+    def matches(self, message: str) -> bool:
         from pattern.text.search import search
         from pattern.text.de import parsetree
+
+        if hash(message) in self.match_cache:
+            return True
+
         message_tree = parsetree(message, relations=True)
-        for match in search('ADJP', message_tree):
+        matches = search('ADJP', message_tree)
+        if len(matches) > 0:
+            if matches[0].constituents()[-1].string.lower() in [
+                "vermutlich",
+                "selbe",
+                "gute",
+                "lieber",
+                "eigentlich",
+                "jam",
+                "neues",
+                "leid",
+                "gleich",
+                "du"
+            ]:
+                return False
+
+            # cache result
+            self.match_cache[hash(message)] = matches
+            return True
+        else:
+            return False
+
+    def get_response(self, chat: Chat, sender: int, message: str) -> str or None:
+        if hash(message) in self.match_cache:
+            matches = self.match_cache[hash(message)]
+        else:
+            from pattern.text.search import search
+            from pattern.text.de import parsetree
+            message_tree = parsetree(message, relations=True)
+            matches = search('ADJP', message_tree)
+
+        for match in matches:
             word = match.constituents()[-1].string
 
             dice = randint(0, 2)
 
             if dice == 0:
-                chat = self._persistence.get_chat(chat.id)
                 user = choice(chat.users)
                 return "{}'s mudda is' {}".format(user.first_name, word)
             elif dice == 1:

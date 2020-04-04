@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-DEINE_MUDDA_VERSION = "1.3.7"
+DEINE_MUDDA_VERSION = "1.3.9"
 
 CONFIG_NODE_ROOT = "deinemudda"
 CONFIG_NODE_TELEGRAM = "telegram"
@@ -31,7 +31,7 @@ CONFIG_NODE_VOTING = "voting"
 
 DEFAULT_SQL_PERSISTENCE_URL = "sqlite:///deinemudda.db"
 
-COMMAND_COMMANDS = ['help', 'h']
+COMMAND_HELP = ['help', 'h']
 COMMAND_VERSION = ['version', 'v']
 COMMAND_CONFIG = ['config', 'c']
 COMMAND_STATS = 'stats'

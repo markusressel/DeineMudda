@@ -10,8 +10,15 @@ RUN apt-get update
 RUN apt-get -y install gcc libffi-dev libssl-dev libxml2-dev libxslt-dev
 #RUN python3 -m ensurepip && pip3 install --upgrade pip setuptools
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir psycopg2
+RUN pip install pipenv
+
+COPY Pipfile Pipfile
+COPY Pipfile.lock Pipfile.lock
+
+RUN pipenv install --system --deploy
+
 COPY . .
 
 CMD [ "python", "./deinemudda/main.py" ]
