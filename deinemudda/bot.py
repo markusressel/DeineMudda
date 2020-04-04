@@ -66,8 +66,7 @@ class DeineMuddaBot:
                 filters=Filters.group & (~ Filters.reply) & (~ Filters.forwarded),
                 callback=self._group_message_callback)],
             2: [CallbackQueryHandler(callback=self._inline_keyboard_click_callback)],
-            3: [MessageHandler(Filters.text, callback=self._message_callback),
-                CommandHandler(
+            3: [CommandHandler(
                     COMMAND_HELP,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
                 callback=self._help_command_callback),
