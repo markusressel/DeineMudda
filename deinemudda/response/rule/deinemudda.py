@@ -118,9 +118,26 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
         from pattern.text.search import search
         from pattern.text.de import parsetree
 
+        if hash(message) in self.match_cache:
+            return True
+
         message_tree = parsetree(message, relations=True)
         matches = search('ADJP', message_tree)
         if len(matches) > 0:
+            if matches[0].constituents()[-1].string.lower() in [
+                "vermutlich",
+                "selbe",
+                "gute",
+                "lieber",
+                "eigentlich",
+                "jam",
+                "neues",
+                "leid",
+                "gleich",
+                "du"
+            ]:
+                return False
+
             # cache result
             self.match_cache[hash(message)] = matches
             return True
