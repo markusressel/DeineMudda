@@ -16,6 +16,21 @@ from tests import TestBase
 
 
 class RuleTest(TestBase):
+    real_examples = [
+        "Oha, das ging aber schnell!",
+        "Einkauf ist auf morgen früh verlegt",
+        "traurig",
+        "die fenster müssten wieder geputzt werden aber bitte nackig",
+        "Schon krass wie organisiert die dort sein müssen",
+        "Jemand jagen?",
+        "für mich ist das Maß irgendwie sehr problematisch",
+        "Frohes neues auch hier",
+        "das is ganz wichtig",
+        "ja wenn nich auch egal",
+        "witzig",
+        "Geil!",
+        "Jemand beim Burger bestellen dabei?",
+    ]
 
     def test_genitive_first_rule(self):
         from deinemudda.response.rule.deinemudda import GenitiveFirstRule

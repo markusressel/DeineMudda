@@ -21,12 +21,11 @@ from deinemudda.persistence import Chat
 class ResponseRule:
 
     @property
-    @abstractmethod
     def __id__(self) -> str:
         """
         :return: a unique identifier for this rule
         """
-        raise NotImplementedError()
+        return self.__class__.__name__
 
     @property
     @abstractmethod

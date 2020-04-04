@@ -21,11 +21,10 @@ from deinemudda.response.rule import ResponseRule
 
 
 class GenitiveFirstRule(ResponseRule):
-    __id__ = "GenitiveRule"
     __description__ = "Respond to 'wen' questions in german"
 
     def matches(self, message: str) -> bool:
-        return re.search(r"(^| )(wen)(| (.)+)", message, re.IGNORECASE) is not None
+        return re.search(r"(^| )(wen)(\?| (.)+)", message, re.IGNORECASE) is not None
 
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
@@ -36,7 +35,6 @@ class GenitiveFirstRule(ResponseRule):
 
 
 class GenitiveSecondRule(ResponseRule):
-    __id__ = "GenitiveSecondRule"
     __description__ = "Respond to 'wessen' questions in german"
 
     def matches(self, message: str) -> bool:
@@ -51,7 +49,6 @@ class GenitiveSecondRule(ResponseRule):
 
 
 class DativRule(ResponseRule):
-    __id__ = "DativRule"
     __description__ = "Respond to 'wem' questions in german"
 
     def matches(self, message: str) -> bool:
@@ -66,7 +63,6 @@ class DativRule(ResponseRule):
 
 
 class WhoGermanRule(ResponseRule):
-    __id__ = "WhoGermanRule"
     __description__ = "Respond to 'who' questions in german"
 
     def matches(self, message: str) -> bool:
@@ -81,7 +77,6 @@ class WhoGermanRule(ResponseRule):
 
 
 class WhoEnglishRule(ResponseRule):
-    __id__ = "WhoEnglishRule"
     __description__ = "Respond to 'who' questions in english"
 
     def matches(self, message: str) -> bool:
@@ -92,7 +87,6 @@ class WhoEnglishRule(ResponseRule):
 
 
 class WhyRule(ResponseRule):
-    __id__ = "WhyRule"
     __description__ = "Respond to 'why' questions"
 
     def matches(self, message: str) -> bool:
@@ -103,7 +97,6 @@ class WhyRule(ResponseRule):
 
 
 class ReflectCounterIntelligenceRule(ResponseRule):
-    __id__ = "ReflectCounterIntelligenceRule"
     __description__ = "Respond to messages containing phrases similar to 'your mother'"
 
     regex = r"^dei(ne)? (mudda|mutter|mama)"
@@ -117,7 +110,6 @@ class ReflectCounterIntelligenceRule(ResponseRule):
 
 
 class AdjectiveCounterIntelligenceRule(ResponseRule):
-    __id__ = "AdjectiveCounterIntelligenceRule"
     __description__ = "Adjective counter intelligence"
 
     match_cache = {}

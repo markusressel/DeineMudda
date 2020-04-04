@@ -16,6 +16,7 @@
 import logging
 import re
 from random import random
+from typing import List
 
 from deinemudda import util
 from deinemudda.const import SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_TRIGGER_PROBABILITY_DEFAULT
@@ -37,7 +38,7 @@ class ResponseManager:
         self.response_rules: [ResponseRule] = self._find_rules()
 
     @staticmethod
-    def _find_rules():
+    def _find_rules() -> List[ResponseRule]:
         """
         :return: list of rules
         """
