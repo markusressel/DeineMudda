@@ -16,7 +16,7 @@
 import logging
 import re
 from random import random
-from typing import List
+from typing import List, Tuple
 
 from deinemudda import util
 from deinemudda.const import SETTINGS_TRIGGER_PROBABILITY_KEY, SETTINGS_TRIGGER_PROBABILITY_DEFAULT, \
@@ -50,27 +50,27 @@ class ResponseManager:
         rule_instances = list(map(lambda x: x(), rule_classes))
         return sorted(rule_instances, key=lambda x: x.__priority__, reverse=True)
 
-    def find_matching_rule(self, chat: Chat, sender: str, message: str) -> str or None:
+    def find_matching_rule(self, chat: Chat, sender: str, message: str) -> Tuple[ResponseRule or None, str or None]:
         """
         Processes the given message and returns a response if one of the response rules match
         :param chat: the chat this message was sent in
         :param sender: the message sender
         :param message: the message
-        :return: Response message or None
+        :return: (Rule, Response message) tuple which may contain None
         """
         normalized_message = self._normalize(message)
 
         # print tags and chunks for debugging
         # TODO: use logger for this and don't log in production at all
         # pprint()
-        from pattern import text
-        parsed = text.parse(normalized_message, relations=True, lemmata=True)
+        # from pattern import text
+        # parsed = text.parse(normalized_message, relations=True, lemmata=True)
 
         global_trigger_chance = float(chat.get_setting(SETTINGS_TRIGGER_PROBABILITY_KEY,
                                                        default=SETTINGS_TRIGGER_PROBABILITY_DEFAULT))
         if random() >= global_trigger_chance:
             # do not respond
-            return
+            return None, None
 
         for response_rule in self.response_rules:
             # TODO: get trigger chance for specific rule based on chat id
@@ -82,15 +82,18 @@ class ResponseManager:
                 if not response:
                     continue
 
-                if self._response_is_bad(message, response):
+                if self._response_is_bad(response_rule, response):
                     # omit this response since we know users won't like it
                     continue
 
                 RESPONSES_COUNT.labels(chat_id=chat.id, rule=response_rule.__id__).inc()
-                return response
+                return response_rule, response
 
-    def _response_is_bad(self, message: str, response: str) -> bool:
-        return self._persistence.is_response_bad(message, response)
+        return None, None
+
+    def _response_is_bad(self, rule: ResponseRule, response: str) -> bool:
+        rating = self._persistence.get_response_rating(rule.__id__, response)
+        return rating < 0
 
     @staticmethod
     def _normalize(message: str):
@@ -115,6 +118,8 @@ class ResponseManager:
         """
         chat_user_count = len(chat.users)
 
+        message = vote_menu.message_text
+
         positive_votes = vote_menu.item_count(VOTE_BUTTON_ID_THUMBS_UP)
         negative_votes = vote_menu.item_count(VOTE_BUTTON_ID_THUMBS_DOWN)
         total_votes = positive_votes + negative_votes
@@ -122,11 +127,14 @@ class ResponseManager:
         if total_votes < (chat_user_count / 3):
             LOGGER.debug(
                 f"Not enough votes ({total_votes}/{chat_user_count}) for meaningful result from vote menu {vote_menu.id} in chat {chat.id}")
+            self._persistence.add_or_update_response_rating(vote_menu.rule_id, message, 0)
             return
         else:
             if positive_votes < negative_votes:
                 LOGGER.debug(
                     f"Response was voted BAD (+{positive_votes} vs -{negative_votes}) by {total_votes}/{chat_user_count} users known in chat {chat.id}")
-                # TODO: find out what the message was that we responded to
-                # TODO: find out what the response was
-                # TODO: remember that this response is not good
+                # remember that this response IS NOT good
+                self._persistence.add_or_update_response_rating(vote_menu.rule_id, message, -1)
+            else:
+                # remember that this response IS good
+                self._persistence.add_or_update_response_rating(vote_menu.rule_id, message, 1)

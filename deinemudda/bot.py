@@ -28,7 +28,7 @@ from deinemudda.config import AppConfig
 from deinemudda.const import *
 from deinemudda.persistence import Persistence, Chat
 from deinemudda.persistence.entity.chat import VoteMenu, VoteMenuItem
-from deinemudda.response import ResponseManager
+from deinemudda.response import ResponseManager, ResponseRule
 from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT, format_metrics
 from deinemudda.util import send_message, build_menu
 
@@ -67,8 +67,8 @@ class DeineMuddaBot:
                 callback=self._group_message_callback)],
             2: [CallbackQueryHandler(callback=self._inline_keyboard_click_callback)],
             3: [CommandHandler(
-                    COMMAND_HELP,
-                    filters=(~ Filters.forwarded) & (~ Filters.reply),
+                COMMAND_HELP,
+                filters=(~ Filters.forwarded) & (~ Filters.reply),
                 callback=self._help_command_callback),
                 CommandHandler(
                     COMMAND_VERSION,
@@ -134,7 +134,8 @@ class DeineMuddaBot:
         """
         self._updater.stop()
 
-    def _shout(self, bot: Bot, message, text: str, reply: bool or int = True, show_vote_menu: bool = True):
+    def _shout(self, bot: Bot, message, text: str, reply: bool or int = True, show_vote_menu: bool = True,
+               rule: ResponseRule = None):
         """
         Shouts a message into the given chat
         :param bot: the bot instance
@@ -142,6 +143,7 @@ class DeineMuddaBot:
         :param text: the text to shout
         :param reply: True to reply to the message's user, int to reply to a specific message, False is no reply
         :param show_vote_menu: whether to show a voting menu
+        :param rule: The rule that generated the message
         """
         shouting_text = "<b>{}!!!</b>".format(text.upper())
 
@@ -180,7 +182,12 @@ class DeineMuddaBot:
             # and what output it produced
 
             chat_entity = self._persistence.get_chat(message.chat_id)
-            new_vote_menu = VoteMenu(chat_id=message.chat_id, message_id=message.message_id)
+            new_vote_menu = VoteMenu(
+                chat_id=message.chat_id,
+                rule_id=rule.__id__,
+                message_id=message.message_id,
+                message_text=text
+            )
             new_vote_menu.items = new_vote_menu_items
             chat_entity.add_or_update_vote_menu(new_vote_menu)
             self._persistence.add_or_update_chat(chat_entity)
@@ -269,9 +276,10 @@ class DeineMuddaBot:
         if len(update.message.text.split()) not in self._config.WORD_COUNT_RANGE.value:
             return
 
-        response_message = self._response_manager.find_matching_rule(chat, from_user.first_name, update.message.text)
-        if response_message:
-            self._shout(bot, update.message, response_message)
+        rule, response_message = self._response_manager.find_matching_rule(chat, from_user.first_name,
+                                                                           update.message.text)
+        if rule and response_message:
+            self._shout(bot, update.message, response_message, rule=rule)
 
         MESSAGES_COUNT.labels(chat_id=chat_id).inc()
 

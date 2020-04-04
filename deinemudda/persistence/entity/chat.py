@@ -21,6 +21,17 @@ from sqlalchemy.orm import relationship
 from deinemudda.persistence.entity import Base
 
 
+class ResponseRating(Base):
+    """
+    Data model of a response rating
+    """
+    __tablename__ = 'response_rating'
+
+    rule_id = Column(String, primary_key=True)
+    response_text = Column(String, primary_key=True)
+    rating = Column(Integer)
+
+
 class Setting(Base):
     """
     Data model of chat specific settings
@@ -82,6 +93,8 @@ class VoteMenu(Base):
     chat = relationship("Chat", back_populates="vote_menus")
 
     message_id = Column(Integer)
+    rule_id = Column(String)
+    message_text = Column(String)
     items = relationship(
         "VoteMenuItem",
         back_populates="vote_menu",

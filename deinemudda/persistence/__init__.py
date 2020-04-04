@@ -20,7 +20,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.util.compat import contextmanager
 
 from deinemudda.config import AppConfig
-from deinemudda.persistence.entity.chat import Chat
+from deinemudda.persistence.entity.chat import Chat, ResponseRating
 from deinemudda.persistence.entity.user import User
 from deinemudda.stats import ENTITIES_COUNT, USERS_IN_CHAT_COUNT
 
@@ -111,12 +111,20 @@ class Persistence:
 
     def add_or_update_user(self, user: User) -> None:
         with self._session_scope(write=True) as session:
-            session.add(user)
+            session.merge(user)
         self._update_stats()
 
-    def is_response_bad(self, message: str, response: str) -> bool:
-        # TODO: check if message/response combo is marked as bad
-        return False
+    def get_response_rating(self, rule_id: str, response: str) -> int:
+        with self._session_scope() as session:
+            entity = session.query(ResponseRating).filter_by(rule_id=rule_id, response_text=response).one_or_none()
+            if entity is None:
+                return 0
+            return entity.rating
+
+    def add_or_update_response_rating(self, rule_id: str, response: str, rating: int):
+        with self._session_scope(write=True) as session:
+            entity = ResponseRating(rule_id=rule_id, response_text=response, rating=rating)
+            session.merge(entity)
 
     def _update_stats(self):
         with self._session_scope() as session:
