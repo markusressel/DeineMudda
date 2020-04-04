@@ -29,7 +29,7 @@ CONFIG_NODE_PORT = "port"
 
 DEFAULT_SQL_PERSISTENCE_URL = "sqlite:///deinemudda.db"
 
-COMMAND_COMMANDS = ['help', 'h']
+COMMAND_HELP = ['help', 'h']
 COMMAND_VERSION = ['version', 'v']
 COMMAND_CONFIG = ['config', 'c']
 COMMAND_STATS = 'stats'

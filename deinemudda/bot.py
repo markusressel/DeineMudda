@@ -61,11 +61,10 @@ class DeineMuddaBot:
 
         handler_groups = {
             0: [MessageHandler(filters=None, callback=self._any_message_callback)],
-            1: [MessageHandler(Filters.text, callback=self._message_callback),
-                CommandHandler(
-                    COMMAND_COMMANDS,
+            1: [CommandHandler(
+                COMMAND_HELP,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
-                    callback=self._commands_command_callback),
+                callback=self._help_command_callback),
                 CommandHandler(
                     COMMAND_VERSION,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
@@ -106,9 +105,10 @@ class DeineMuddaBot:
                     COMMAND_SET_CHANCE,
                     filters=(~ Filters.forwarded) & (~ Filters.reply),
                     callback=self._set_chance_command_callback),
+                MessageHandler(Filters.text, callback=self._message_callback),
                 MessageHandler(
                     filters=Filters.command & ~ Filters.reply,
-                    callback=self._commands_command_callback)],
+                    callback=self._help_command_callback)],
             2: [MessageHandler(
                 filters=Filters.group & (~ Filters.reply) & (~ Filters.forwarded),
                 callback=self._group_message_callback)],
@@ -225,11 +225,11 @@ class DeineMuddaBot:
                 self._persistence.add_or_update_chat(chat)
 
     @command(
-        name=COMMAND_COMMANDS,
+        name=COMMAND_HELP,
         description="List commands supported by this bot.",
         permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
-    def _commands_command_callback(self, update: Update, context: CallbackContext):
+    def _help_command_callback(self, update: Update, context: CallbackContext):
         bot = context.bot
         chat_id = update.effective_message.chat_id
         text = generate_command_list(update, context)
