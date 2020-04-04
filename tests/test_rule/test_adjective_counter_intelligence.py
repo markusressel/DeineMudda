@@ -12,6 +12,8 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+from types import SimpleNamespace
+
 from deinemudda.response.rule.deinemudda import AdjectiveCounterIntelligenceRule
 from tests import TestBase
 
@@ -21,10 +23,12 @@ class AdjectiveCounterIntelligenceRuleTest(TestBase):
     def test_multiple_words(self):
         rule = AdjectiveCounterIntelligenceRule()
 
-        dummy_chat = {
-            "users": []
-        }
+        dummy_chat = SimpleNamespace(users=[SimpleNamespace(first_name="markus")])
 
         # TODO: this will randomly fail due to random selection of response in rule...
         response = rule.get_response(dummy_chat, None, "Ihr seid hässlich, dumm und doof")
-        self.assertEqual("deine mudda is' hässlich , dumm und doof", response)
+        self.assertIn(response, [
+            "deine mudda is' hässlich , dumm und doof",
+            "markus's mudda is' hässlich , dumm und doof",
+            "wie deine mudda beim kacken",
+        ])
