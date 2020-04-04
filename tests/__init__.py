@@ -14,9 +14,15 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import unittest
+from types import SimpleNamespace
+from typing import List
+
+from deinemudda.response import ResponseRule, ResponseManager
 
 
 class TestBase(unittest.TestCase):
+    all_rules: List[ResponseRule] = ResponseManager._find_rules()
+    dummy_chat = SimpleNamespace(users=[SimpleNamespace(first_name="markus")])
 
     def setUp(self):
         pass

@@ -12,9 +12,7 @@
 #
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-from typing import List
 
-from deinemudda.response import ResponseManager, ResponseRule
 from tests import TestBase
 
 
@@ -33,9 +31,7 @@ class NegativeExamplesTest(TestBase):
         "wenn du was raussuchst, auch gerne da",  # -> fail
     ]
 
-    rules: List[ResponseRule] = ResponseManager._find_rules()
-
     def test_negative_examples(self):
-        for rule in self.rules:
+        for rule in self.all_rules:
             for phrase in self.real_examples:
                 self.assertFalse(rule.matches(phrase), f"Rule {rule.__id__} unexpectedly matched: {phrase}")
