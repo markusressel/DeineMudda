@@ -156,12 +156,27 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
         for match in matches:
             word = match.constituents()[-1].string
 
-            dice = randint(0, 2)
+            dice = randint(0, 1)
 
             if dice == 0:
                 user = choice(chat.users)
                 return "{}'s mudda is' {}".format(user.first_name, word)
-            elif dice == 1:
-                return "wie deine mudda beim kacken"
             else:
                 return "deine mudda is' {}".format(word)
+
+
+class AdjectiveCounterIntelligenceKackenRule(AdjectiveCounterIntelligenceRule):
+    __description__ = "Wie deine mudda beim kacken"
+
+    def get_response(self, chat: Chat, sender: int, message: str) -> str or None:
+        if hash(message) in self.match_cache:
+            matches = self.match_cache[hash(message)]
+        else:
+            from pattern.text.search import search
+            from pattern.text.de import parsetree
+            message_tree = parsetree(message, relations=True)
+            matches = search('ADJP', message_tree)
+
+        for match in matches:
+            word = match.constituents()[-1].string
+            return "wie deine mudda beim kacken"

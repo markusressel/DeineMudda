@@ -136,7 +136,7 @@ class ResponseManager:
                 negative_votes_total += negative_votes
 
             voting_result = positive_votes_total - negative_votes_total
-            messages = list(map(lambda x: x.message_text, vote_menus))
+            messages = set(map(lambda x: x.message_text, vote_menus))
             LOGGER.debug(
                 f"New response rating {voting_result} (+{positive_votes_total} vs -{negative_votes_total})"
                 f" for messages: {messages}")
