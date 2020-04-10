@@ -55,11 +55,11 @@ class VoteMenuItemVoter(Base):
     __table_args__ = (UniqueConstraint('vote_menu_item_id', 'user_id', name='_vote_menu_item_voter_uc'),)
 
     id = Column(Integer, primary_key=True)
-    vote_menu_item_id = Column(String, ForeignKey('vote_menu_items.id'))
+    vote_menu_item_id = Column(String, ForeignKey('vote_menu_items.id'), nullable=False)
     vote_menu_item = relationship("VoteMenuItem", back_populates="voters")
 
-    user_id = Column(Integer)
-    count = Column(Integer)
+    user_id = Column(Integer, nullable=False)
+    count = Column(Integer, nullable=False)
 
 
 class VoteMenuItem(Base):
@@ -70,7 +70,7 @@ class VoteMenuItem(Base):
     __table_args__ = (UniqueConstraint('vote_menu_id', 'id', name='_vote_menu_item_uc'),)
 
     id = Column(String, primary_key=True)
-    vote_menu_id = Column(Integer, ForeignKey('vote_menus.id'))
+    vote_menu_id = Column(Integer, ForeignKey('vote_menus.id'), nullable=False)
     vote_menu = relationship("VoteMenu", back_populates="items")
 
     text = Column(String)
@@ -89,12 +89,14 @@ class VoteMenu(Base):
     __tablename__ = 'vote_menus'
 
     id = Column(Integer, primary_key=True)
-    chat_id = Column(Integer, ForeignKey('chats.id'))
+    chat_id = Column(Integer, ForeignKey('chats.id'), nullable=False)
     chat = relationship("Chat", back_populates="vote_menus")
 
-    message_id = Column(Integer)
-    rule_id = Column(String)
-    message_text = Column(String)
+    message_id = Column(Integer, nullable=False)
+    rule_id = Column(String, nullable=False)
+    rule_trigger = Column(String)
+    message_text = Column(String, nullable=False)
+    trigger_text = Column(String, nullable=False)
     items = relationship(
         "VoteMenuItem",
         back_populates="vote_menu",

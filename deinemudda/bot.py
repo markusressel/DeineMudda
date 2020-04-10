@@ -176,17 +176,14 @@ class DeineMuddaBot:
 
             trigger_text = message.text
 
-            # TODO: to be useful it would be necessary to know what the
-            # initial message was that the bot responded to,
-            # or more precisely, which response rule responded to the mentioned input
-            # and what output it produced
-
             chat_entity = self._persistence.get_chat(message.chat_id)
             new_vote_menu = VoteMenu(
                 chat_id=message.chat_id,
                 rule_id=rule.__id__,
+                rule_trigger=None,
                 message_id=message.message_id,
-                message_text=text
+                message_text=text,
+                trigger_text=message.text
             )
             new_vote_menu.items = new_vote_menu_items
             chat_entity.add_or_update_vote_menu(new_vote_menu)
@@ -252,7 +249,9 @@ class DeineMuddaBot:
             # get new instance of persisted chat
             chat_entity = self._persistence.get_chat(chat_entity.id)
             vote_menu = chat_entity.get_vote_menu(message_id)
-            self._response_manager.evaluate(chat_entity, vote_menu)
+
+            # evaluate votes and update response rating
+            self._response_manager.evaluate(vote_menu)
 
             menu_markup = self._build_vote_menu(vote_menu.items)
 

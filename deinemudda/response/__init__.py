@@ -110,31 +110,35 @@ class ResponseManager:
         normalized_message = re.sub('[^a-z0-9äöüß| ?]+', '', normalized_message)
         return normalized_message
 
-    def evaluate(self, chat: Chat, vote_menu: VoteMenu):
+    def evaluate(self, vote_menu: VoteMenu):
         """
         Evaluates a vote menu to learn from it
-        :param chat: the chat
         :param vote_menu: the vote menu
         """
-        chat_user_count = len(chat.users)
+        with self._persistence._session_scope() as session:
+            vote_menus = self._persistence.find_vote_menus_by_rule(session, vote_menu.rule_id, vote_menu.rule_trigger)
 
-        message = vote_menu.message_text
+            positive_votes_total = 0
+            negative_votes_total = 0
+            for vote_menu in vote_menus:
+                chat = vote_menu.chat
+                chat_user_count = len(chat.users)
 
-        positive_votes = vote_menu.item_count(VOTE_BUTTON_ID_THUMBS_UP)
-        negative_votes = vote_menu.item_count(VOTE_BUTTON_ID_THUMBS_DOWN)
-        total_votes = positive_votes + negative_votes
+                positive_votes = vote_menu.item_count(VOTE_BUTTON_ID_THUMBS_UP)
+                negative_votes = vote_menu.item_count(VOTE_BUTTON_ID_THUMBS_DOWN)
+                total_votes = positive_votes + negative_votes
+                if total_votes < (chat_user_count / 3):
+                    LOGGER.debug(
+                        f"Not enough votes ({total_votes}/{chat_user_count}) for meaningful result from vote menu {vote_menu.id} in chat {chat.id}")
+                    continue
 
-        if total_votes < (chat_user_count / 3):
+                positive_votes_total += positive_votes
+                negative_votes_total += negative_votes
+
+            voting_result = positive_votes_total - negative_votes_total
+            messages = list(map(lambda x: x.message_text, vote_menus))
             LOGGER.debug(
-                f"Not enough votes ({total_votes}/{chat_user_count}) for meaningful result from vote menu {vote_menu.id} in chat {chat.id}")
-            self._persistence.add_or_update_response_rating(vote_menu.rule_id, message, 0)
-            return
-        else:
-            if positive_votes < negative_votes:
-                LOGGER.debug(
-                    f"Response was voted BAD (+{positive_votes} vs -{negative_votes}) by {total_votes}/{chat_user_count} users known in chat {chat.id}")
-                # remember that this response IS NOT good
-                self._persistence.add_or_update_response_rating(vote_menu.rule_id, message, -1)
-            else:
-                # remember that this response IS good
-                self._persistence.add_or_update_response_rating(vote_menu.rule_id, message, 1)
+                f"New response rating {voting_result} (+{positive_votes_total} vs -{negative_votes_total})"
+                f" for messages: {messages}")
+            for message in messages:
+                self._persistence.add_or_update_response_rating(vote_menu.rule_id, message, voting_result)

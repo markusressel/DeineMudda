@@ -1,15 +1,15 @@
 """Voting
 
-Revision ID: 0e95c803b10d
+Revision ID: ffa38d257e9d
 Revises: cd9e7376fc77
-Create Date: 2020-04-04 22:14:08.823574
+Create Date: 2020-04-10 21:04:25.497995
 
 """
 import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '0e95c803b10d'
+revision = 'ffa38d257e9d'
 down_revision = 'cd9e7376fc77'
 branch_labels = None
 depends_on = None
@@ -25,16 +25,18 @@ def upgrade():
                     )
     op.create_table('vote_menus',
                     sa.Column('id', sa.Integer(), nullable=False),
-                    sa.Column('chat_id', sa.Integer(), nullable=True),
-                    sa.Column('message_id', sa.Integer(), nullable=True),
-                    sa.Column('rule_id', sa.String(), nullable=True),
-                    sa.Column('message_text', sa.String(), nullable=True),
+                    sa.Column('chat_id', sa.Integer(), nullable=False),
+                    sa.Column('message_id', sa.Integer(), nullable=False),
+                    sa.Column('rule_id', sa.String(), nullable=False),
+                    sa.Column('rule_trigger', sa.String(), nullable=True),
+                    sa.Column('message_text', sa.String(), nullable=False),
+                    sa.Column('trigger_text', sa.String(), nullable=False),
                     sa.ForeignKeyConstraint(['chat_id'], ['chats.id'], ),
                     sa.PrimaryKeyConstraint('id')
                     )
     op.create_table('vote_menu_items',
                     sa.Column('id', sa.String(), nullable=False),
-                    sa.Column('vote_menu_id', sa.Integer(), nullable=True),
+                    sa.Column('vote_menu_id', sa.Integer(), nullable=False),
                     sa.Column('text', sa.String(), nullable=True),
                     sa.ForeignKeyConstraint(['vote_menu_id'], ['vote_menus.id'], ),
                     sa.PrimaryKeyConstraint('id'),
@@ -42,9 +44,9 @@ def upgrade():
                     )
     op.create_table('vote_menu_item_voters',
                     sa.Column('id', sa.Integer(), nullable=False),
-                    sa.Column('vote_menu_item_id', sa.String(), nullable=True),
-                    sa.Column('user_id', sa.Integer(), nullable=True),
-                    sa.Column('count', sa.Integer(), nullable=True),
+                    sa.Column('vote_menu_item_id', sa.String(), nullable=False),
+                    sa.Column('user_id', sa.Integer(), nullable=False),
+                    sa.Column('count', sa.Integer(), nullable=False),
                     sa.ForeignKeyConstraint(['vote_menu_item_id'], ['vote_menu_items.id'], ),
                     sa.PrimaryKeyConstraint('id'),
                     sa.UniqueConstraint('vote_menu_item_id', 'user_id', name='_vote_menu_item_voter_uc')

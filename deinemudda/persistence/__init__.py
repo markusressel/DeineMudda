@@ -14,13 +14,14 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+from typing import List
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.util.compat import contextmanager
 
 from deinemudda.config import AppConfig
-from deinemudda.persistence.entity.chat import Chat, ResponseRating
+from deinemudda.persistence.entity.chat import Chat, ResponseRating, VoteMenu
 from deinemudda.persistence.entity.user import User
 from deinemudda.stats import ENTITIES_COUNT, USERS_IN_CHAT_COUNT
 
@@ -113,6 +114,9 @@ class Persistence:
         with self._session_scope(write=True) as session:
             session.merge(user)
         self._update_stats()
+
+    def find_vote_menus_by_rule(self, session, rule_id: str, rule_trigger: str or None) -> List[VoteMenu]:
+        return session.query(VoteMenu).filter_by(rule_id=rule_id, rule_trigger=rule_trigger).all()
 
     def get_response_rating(self, rule_id: str, response: str) -> int:
         with self._session_scope() as session:
