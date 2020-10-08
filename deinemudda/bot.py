@@ -337,7 +337,7 @@ class DeineMuddaBot:
         description="Set the trigger probability to a specific value.",
         arguments=[
             Argument(
-                name="probability",
+                name=["probability", "p"],
                 example="0.13",
                 type=float,
                 converter=lambda x: float(x),
@@ -363,7 +363,7 @@ class DeineMuddaBot:
         description="Turn antispam feature on/off",
         arguments=[
             Selection(
-                name="state",
+                name=["state", "s"],
                 description="The new state",
                 allowed_values=["on", "off"]
             )
@@ -402,7 +402,7 @@ class DeineMuddaBot:
         description="Ban a user",
         arguments=[
             Argument(
-                name=["user"],
+                name=["user", "u"],
                 description="Username or user id",
                 type=str,
                 example="123456789",
@@ -438,7 +438,7 @@ class DeineMuddaBot:
         description="Unban a banned user",
         arguments=[
             Argument(
-                name=["user"],
+                name=["user", "u"],
                 description="Username or user id",
                 type=str,
                 example="123456789",
