@@ -222,10 +222,10 @@
         },
         "emoji": {
             "hashes": [
-                "sha256:21257f311e24468031e85685867c00b87249dc7612b82dc763a771ba5fb00c01"
+                "sha256:53d61a8e4c025f6c295ab99c842302c66d47952199c4fde66dd060dee3ad4324"
             ],
             "index": "pypi",
-            "version": "==1.4.2"
+            "version": "==1.6.1"
         },
         "feedparser": {
             "hashes": [
@@ -772,11 +772,11 @@
         },
         "ruamel.yaml": {
             "hashes": [
-                "sha256:9751de4cbb57d4bfbf8fc394e125ed4a2f170fbff3dc3d78abf50be85924f8be",
-                "sha256:9af3ec5d7f8065582f3aa841305465025d0afd26c5fb54e15b964e11838fc74f"
+                "sha256:92b85e64a1d75adc29f941960f5a88dcf3d233a0ba0c3d0a864ca9645a9b7271",
+                "sha256:9c648677803a2e9570c1116d15ba4fd89198c8966171868044bee2181cae8ab3"
             ],
             "markers": "python_version >= '3'",
-            "version": "==0.17.17"
+            "version": "==0.17.18"
         },
         "ruamel.yaml.clib": {
             "hashes": [
