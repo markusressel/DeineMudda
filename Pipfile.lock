@@ -222,10 +222,10 @@
         },
         "emoji": {
             "hashes": [
-                "sha256:21257f311e24468031e85685867c00b87249dc7612b82dc763a771ba5fb00c01"
+                "sha256:53d61a8e4c025f6c295ab99c842302c66d47952199c4fde66dd060dee3ad4324"
             ],
             "index": "pypi",
-            "version": "==1.4.2"
+            "version": "==1.6.1"
         },
         "feedparser": {
             "hashes": [
