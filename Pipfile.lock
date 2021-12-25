@@ -608,11 +608,11 @@
         },
         "prometheus-client": {
             "hashes": [
-                "sha256:3a8baade6cb80bcfe43297e33e7623f3118d660d41387593758e2fb1ea173a86",
-                "sha256:b014bc76815eb1399da8ce5fc84b7717a3e63652b0c0f8804092c9363acab1b2"
+                "sha256:1b12ba48cee33b9b0b9de64a1047cbd3c5f2d0ab6ebcead7ddda613a750ec3c5",
+                "sha256:317453ebabff0a1b02df7f708efbab21e3489e7072b61cb6957230dd004a0af0"
             ],
             "index": "pypi",
-            "version": "==0.11.0"
+            "version": "==0.12.0"
         },
         "py-range-parse": {
             "hashes": [
@@ -772,11 +772,11 @@
         },
         "ruamel.yaml": {
             "hashes": [
-                "sha256:9751de4cbb57d4bfbf8fc394e125ed4a2f170fbff3dc3d78abf50be85924f8be",
-                "sha256:9af3ec5d7f8065582f3aa841305465025d0afd26c5fb54e15b964e11838fc74f"
+                "sha256:92b85e64a1d75adc29f941960f5a88dcf3d233a0ba0c3d0a864ca9645a9b7271",
+                "sha256:9c648677803a2e9570c1116d15ba4fd89198c8966171868044bee2181cae8ab3"
             ],
             "markers": "python_version >= '3'",
-            "version": "==0.17.17"
+            "version": "==0.17.18"
         },
         "ruamel.yaml.clib": {
             "hashes": [
