@@ -15,6 +15,7 @@
 
 import re
 from random import randint, choice
+from typing import List, Tuple
 
 from deinemudda.persistence import Chat
 from deinemudda.response.rule import ResponseRule
@@ -115,31 +116,26 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
     match_cache = {}
 
     def matches(self, message: str) -> bool:
-        from pattern.text.search import search
-        from pattern.text.de import parsetree
 
         if hash(message) in self.match_cache:
             return True
 
-        message_tree = parsetree(message, relations=True)
-        matches = search('ADJP', message_tree)
-        if len(matches) > 0:
-            if matches[0].constituents()[-1].string.lower() in [
-                "vermutlich",
-                "selbe",
-                "gute",
-                "lieber",
-                "eigentlich",
-                "jam",
-                "neues",
-                "leid",
-                "gleich",
-                "du"
-            ]:
-                return False
+        constituents = self._find_adpj(message)
+        if len(constituents) > 0 and constituents[-1].lower() not in [
+            "vermutlich",
+            "selbe",
+            "gute",
+            "lieber",
+            "eigentlich",
+            "jam",
+            "neues",
+            "leid",
+            "gleich",
+            "du"
+        ]:
 
             # cache result
-            self.match_cache[hash(message)] = matches
+            self.match_cache[hash(message)] = constituents
             return True
         else:
             return False
@@ -148,20 +144,29 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
         if hash(message) in self.match_cache:
             matches = self.match_cache[hash(message)]
         else:
-            from pattern.text.search import search
-            from pattern.text.de import parsetree
-            message_tree = parsetree(message, relations=True)
-            matches = search('ADJP', message_tree)
+            matches = self._find_adpj(message)
 
-        for match in matches:
-            word = match.constituents()[-1].string
+        dice = randint(0, 2)
 
-            dice = randint(0, 2)
+        if dice == 0:
+            user = choice(chat.users)
+            return "{}'s mudda is' {}".format(user.first_name, " ".join(matches))
+        elif dice == 1:
+            return "wie deine mudda beim kacken"
+        else:
+            return "deine mudda is' {}".format(" ".join(matches))
 
-            if dice == 0:
-                user = choice(chat.users)
-                return "{}'s mudda is' {}".format(user.first_name, word)
-            elif dice == 1:
-                return "wie deine mudda beim kacken"
-            else:
-                return "deine mudda is' {}".format(word)
+    def _find_adpj(self, message) -> List[Tuple[str, str]]:
+        from textblob_de import TextBlobDE as TextBlob
+        blob = TextBlob(message)
+        parsed = blob.parse()
+
+        result = []
+        sentences = parsed.split()
+        for sentence in sentences:
+            for word_tuple in sentence:
+                word = word_tuple[0]
+                if any(map(lambda x: "ADJP" in x, word_tuple[1:])):
+                    result.append(word)
+
+        return result

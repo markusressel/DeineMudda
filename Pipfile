@@ -7,11 +7,13 @@ name = "pypi"
 container-app-conf = ">=5.0.0"
 python-telegram-bot = ">=12"
 telegram-click = ">=3"
-pattern = "*"
+textblob = "*"
+textblob-de = "*"
 emoji = "*"
 sqlalchemy = "*"
 alembic = "*"
 prometheus-client = "*"
+# psycopg2-binary
 
 [dev-packages]
 pytest = "*"

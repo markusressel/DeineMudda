@@ -59,10 +59,9 @@ class ResponseManager:
         normalized_message = self._normalize(message)
 
         # print tags and chunks for debugging
-        # TODO: use logger for this and don't log in production at all
-        # pprint()
-        from pattern import text
-        parsed = text.parse(normalized_message, relations=True, lemmata=True)
+        # from textblob_de import TextBlobDE as TextBlob
+        # blob = TextBlob(normalized_message)
+        # parsed = blob.parse()
 
         global_trigger_chance = float(chat.get_setting(SETTINGS_TRIGGER_PROBABILITY_KEY,
                                                        default=SETTINGS_TRIGGER_PROBABILITY_DEFAULT))
