@@ -25,6 +25,7 @@ jobs:
       - name: Test with pytest
         run: |
           pipenv install --system --deploy
+          python -m textblob.download_corpora
           pip install pytest
           cd tests
           pytest
