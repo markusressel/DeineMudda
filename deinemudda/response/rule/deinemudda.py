@@ -15,7 +15,7 @@
 
 import re
 from random import randint, choice
-from typing import List, Tuple
+from typing import List
 
 from deinemudda.persistence import Chat
 from deinemudda.response.rule import ResponseRule
@@ -156,7 +156,7 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
         else:
             return "deine mudda is' {}".format(" ".join(matches))
 
-    def _find_adpj(self, message) -> List[Tuple[str, str]]:
+    def _find_adpj(self, message) -> List[str]:
         from textblob_de import TextBlobDE as TextBlob
         blob = TextBlob(message)
         parsed = blob.parse()
