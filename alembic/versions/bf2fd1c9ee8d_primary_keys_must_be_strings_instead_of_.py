@@ -9,6 +9,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
+from sqlalchemy import Integer
+
 revision = 'bf2fd1c9ee8d'
 down_revision = 'cd9e7376fc77'
 branch_labels = None
@@ -46,7 +48,8 @@ def upgrade():
                     sa.ForeignKeyConstraint(['user_id'], ['users.id'], )
                     )
     op.create_table('settings',
-                    sa.Column('id', sa.BigInteger(), nullable=False),
+                    sa.Column('id', sa.BigInteger().with_variant(Integer, "sqlite"), nullable=False,
+                              autoincrement=True),
                     sa.Column('chat_id', sa.BigInteger(), nullable=True),
                     sa.Column('key', sa.String(), nullable=True),
                     sa.Column('value', sa.String(), nullable=True),
