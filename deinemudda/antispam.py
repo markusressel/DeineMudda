@@ -93,9 +93,9 @@ class AntiSpam:
             else:
                 try:
                     kicked = bot.kickChatMember(chat_id, from_user.id)
-                    LOGGER.debug("Kicked: {}".format(kicked))
+                    LOGGER.debug(f"Kicked: {kicked}")
                 except Exception as ex:
-                    LOGGER.debug("Error kicking user {}: {}".format(from_user.id, ex))
+                    LOGGER.debug(f"Error kicking user {from_user.id}: {ex}")
                 self.set_user_ban(from_user.id, True)
                 LOGGER.debug(f"Banned user {from_user.id} because of excessive spam")
 

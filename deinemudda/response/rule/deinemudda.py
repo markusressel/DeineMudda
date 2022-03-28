@@ -30,7 +30,7 @@ class GenitiveFirstRule(ResponseRule):
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
             user = choice(chat.users)
-            return "{}'s mudda".format(user.first_name)
+            return f"{user.first_name}'s mudda"
         else:
             return 'deine mudda'
 
@@ -44,7 +44,7 @@ class GenitiveSecondRule(ResponseRule):
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
             user = choice(chat.users)
-            return "von {}'s mudda".format(user.first_name)
+            return f"von {user.first_name}'s mudda"
         else:
             return 'von deiner mudda'
 
@@ -58,7 +58,7 @@ class DativRule(ResponseRule):
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
             user = choice(chat.users)
-            return "{}'s mudda".format(user.first_name)
+            return f"{user.first_name}'s mudda"
         else:
             return 'deiner mudda'
 
@@ -72,7 +72,7 @@ class WhoGermanRule(ResponseRule):
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         if randint(0, 3) == 3:
             user = choice(chat.users)
-            return "{}'s mudda".format(user.first_name)
+            return f"{user.first_name}'s mudda"
         else:
             return 'deine mudda'
 
@@ -107,7 +107,7 @@ class ReflectCounterIntelligenceRule(ResponseRule):
 
     def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
         hit = re.search(self.regex, message, re.IGNORECASE)
-        return "nee, {}".format(hit.group(0))
+        return f"nee, {hit.group(0)}"
 
 
 class AdjectiveCounterIntelligenceRule(ResponseRule):
@@ -148,13 +148,15 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
 
         dice = randint(0, 2)
 
+        word_response = " ".join(matches)
+
         if dice == 0:
             user = choice(chat.users)
-            return "{}'s mudda is' {}".format(user.first_name, " ".join(matches))
+            return f"{user.first_name}'s mudda is' {word_response}"
         elif dice == 1:
             return "wie deine mudda beim kacken"
         else:
-            return "deine mudda is' {}".format(" ".join(matches))
+            return f"deine mudda is' {word_response}"
 
     def _find_adpj(self, message) -> List[str]:
         from textblob_de import TextBlobDE as TextBlob

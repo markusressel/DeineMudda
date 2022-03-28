@@ -140,7 +140,7 @@ class DeineMuddaBot:
         :param text: text to shout
         :param reply: True to reply to the message's user, int to reply to a specific message, False is no reply
         """
-        shouting_text = "<b>{}!!!</b>".format(text.upper())
+        shouting_text = f"<b>{text.upper()}!!!</b>"
 
         reply_to_message_id = None
         if reply:
@@ -204,11 +204,11 @@ class DeineMuddaBot:
         if effective_message.new_chat_members:
             for member in effective_message.new_chat_members:
                 if member.id == my_id:
-                    LOGGER.debug("Bot was added to group: {}".format(chat_id))
+                    LOGGER.debug(f"Bot was added to group: {chat_id}")
                     chat_entity = Chat(id=chat_id, type=chat_type)
                     self._persistence.add_or_update_chat(chat_entity)
                 else:
-                    LOGGER.debug("{} ({}) joined group {}".format(member.full_name, member.id, chat_id))
+                    LOGGER.debug(f"{member.full_name} ({member.id}) joined group {chat_id}")
                     chat = self._persistence.get_chat(chat_id)
                     # remember chat user
                     self._persistence.add_or_update_chat_member(chat, member)
@@ -216,10 +216,10 @@ class DeineMuddaBot:
         if effective_message.left_chat_member:
             member = effective_message.left_chat_member
             if member.id == my_id:
-                LOGGER.debug("Bot was removed from group: {}".format(chat_id))
+                LOGGER.debug(f"Bot was removed from group: {chat_id}")
                 self._persistence.delete_chat(chat_id)
             else:
-                LOGGER.debug("{} ({}) left group {}".format(member.full_name, member.id, chat_id))
+                LOGGER.debug(f"{member.full_name} ({member.id}) left group {chat_id}")
                 chat = self._persistence.get_chat(chat_id)
                 chat.users = list(filter(lambda x: x.id != member.id, chat.users))
                 self._persistence.add_or_update_chat(chat)
@@ -244,7 +244,7 @@ class DeineMuddaBot:
         bot = context.bot
         chat_id = update.effective_message.chat_id
         message_id = update.effective_message.message_id
-        text = "Version: `{}`".format(DEINE_MUDDA_VERSION)
+        text = f"Version: `{DEINE_MUDDA_VERSION}`"
         send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN, reply_to=message_id)
 
     @command(
@@ -260,7 +260,7 @@ class DeineMuddaBot:
         message_id = update.effective_message.message_id
 
         text = self._config.print(formatter=TomlFormatter())
-        text = "```\n{}\n```".format(text)
+        text = f"```\n{text}\n```"
         send_message(bot, chat_id, text, parse_mode=ParseMode.MARKDOWN, reply_to=message_id)
 
     @command(
@@ -323,7 +323,7 @@ class DeineMuddaBot:
 
         lines = []
         for setting in chat.settings:
-            lines.append("{}: {}".format(setting.key, setting.value))
+            lines.append(f"{setting.key}: {setting.value}")
 
         message = "\n".join(lines)
         if message:
@@ -356,7 +356,7 @@ class DeineMuddaBot:
         chat.set_setting(SETTINGS_TRIGGER_PROBABILITY_KEY, str(probability))
         self._persistence.add_or_update_chat(chat)
 
-        send_message(bot, chat_id, message="TriggerChance: {}%".format(probability * 100), reply_to=message_id)
+        send_message(bot, chat_id, message=f"TriggerChance: {probability * 100}%", reply_to=message_id)
 
     @command(
         name=COMMAND_SET_ANTISPAM,
@@ -379,7 +379,7 @@ class DeineMuddaBot:
         chat.set_setting(SETTINGS_ANTISPAM_ENABLED_KEY, new_state)
         self._persistence.add_or_update_chat(chat)
 
-        send_message(bot, chat_id, message="Antispam: {}".format(new_state), reply_to=message_id)
+        send_message(bot, chat_id, message=f"Antispam: {new_state}", reply_to=message_id)
 
     @command(
         name=COMMAND_LIST_USERS,

@@ -65,6 +65,6 @@ def format_metrics() -> str:
         samples = list(metric._samples())
         samples_text = format_samples(samples)
 
-        return "{}:\n{}".format(name, samples_text)
+        return f"{name}:\n{samples_text}"
 
     return "\n\n".join(map(format_metric, get_metrics()))
