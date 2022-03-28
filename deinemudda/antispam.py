@@ -14,6 +14,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import datetime
 import logging
+from typing import Dict
 
 from telegram import Update
 from telegram.ext import CallbackContext
@@ -34,7 +35,7 @@ class AntiSpam:
     Keeps track of messages from users to decide if someone is spamming commands
     """
 
-    data = {}
+    data: Dict[int, Dict] = {}
 
     def __init__(self, config: AppConfig, persistence: Persistence):
         self._config = config

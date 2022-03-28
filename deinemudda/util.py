@@ -16,7 +16,7 @@
 from telegram import Bot, Message
 
 
-def send_message(bot: Bot, chat_id: str, message: str, parse_mode: str = None, reply_to: int = None) -> Message:
+def send_message(bot: Bot, chat_id: int, message: str, parse_mode: str = None, reply_to: int = None) -> Message:
     """
     Sends a text message to the given chat
     :param bot: the bot
