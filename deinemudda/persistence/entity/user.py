@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, String, DateTime, Boolean, BigInteger
 from sqlalchemy.orm import relationship
 
 from deinemudda.persistence.entity import Base
@@ -26,7 +26,7 @@ class User(Base):
     """
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
 
     username = Column(String)
     first_name = Column(String)

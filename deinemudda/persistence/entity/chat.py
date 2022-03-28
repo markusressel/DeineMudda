@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, ForeignKey, String, Table, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, String, Table, UniqueConstraint, BigInteger
 from sqlalchemy.orm import relationship
 
 from deinemudda.persistence.entity import Base
@@ -26,8 +26,8 @@ class Setting(Base):
     __tablename__ = 'settings'
     __table_args__ = (UniqueConstraint('chat_id', 'key', name='_setting_key_uc'),)
 
-    id = Column(Integer, primary_key=True)
-    chat_id = Column(Integer, ForeignKey('chats.id'))
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    chat_id = Column(BigInteger, ForeignKey('chats.id'))
     chat = relationship("Chat", back_populates="settings")
 
     key = Column(String, index=True)
@@ -35,8 +35,8 @@ class Setting(Base):
 
 
 association_table = Table('association', Base.metadata,
-                          Column('chat_id', Integer, ForeignKey('chats.id')),
-                          Column('user_id', Integer, ForeignKey('users.id')))
+                          Column('chat_id', BigInteger, ForeignKey('chats.id')),
+                          Column('user_id', BigInteger, ForeignKey('users.id')))
 
 
 class Chat(Base):
@@ -45,7 +45,7 @@ class Chat(Base):
     """
     __tablename__ = 'chats'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     type = Column(String)
     users = relationship(
         "User",
