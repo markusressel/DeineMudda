@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU Affero General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, ForeignKey, String, Table, UniqueConstraint, BigInteger
+from sqlalchemy import Column, ForeignKey, String, Table, UniqueConstraint, BigInteger, Integer
 from sqlalchemy.orm import relationship
 
 from deinemudda.persistence.entity import Base
@@ -26,7 +26,7 @@ class Setting(Base):
     __tablename__ = 'settings'
     __table_args__ = (UniqueConstraint('chat_id', 'key', name='_setting_key_uc'),)
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
     chat_id = Column(BigInteger, ForeignKey('chats.id'))
     chat = relationship("Chat", back_populates="settings")
 
