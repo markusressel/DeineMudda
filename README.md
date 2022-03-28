@@ -19,24 +19,36 @@ to see what the **YAML** config would look like.
 
 ## Setup
 
-To install the `pattern` library used by this bot you probably have to 
-install `python-mysqlclient` as a system package manually.
+To install the `pattern` library used by this bot you probably have to install `python-mysqlclient` as a system package
+manually.
 
 ## Debugging and execution
 
-Because of [PEP 479](https://www.python.org/dev/peps/pep-0479/) which is
-not yet respected in the `pattern` library used by this bot
-it is required to use a python 3 runtime lower than 3.7 so 3.6 is 
-recommended.
+Because of [PEP 479](https://www.python.org/dev/peps/pep-0479/) which is not yet respected in the `pattern` library used
+by this bot it is required to use a python 3 runtime lower than 3.7 so 3.6 is recommended.
 
-Make sure to use the project base dir as the working directory and run: 
+### Postgres
+
+```bash
+docker run \
+  --name postgres \
+  -e POSTGRES_USER=deinemudda \
+  -e POSTGRES_PASSWORD=deinemudda \
+  -p 5432:5432 \
+  -d postgres
+```
+
+### Base dir
+
+Make sure to use the project base dir as the working directory and run:
+
 ```
 python3 ./deinemudda/main.py
 ```
 
 ## Telegram bot config
 
-For the bot to be able to read messages you have to set the `Privacy` 
+For the bot to be able to read messages you have to set the `Privacy`
 setting of your bot to `DISABLED` (using `/setprivacy` and `disable`).
 Otherwise the bot is only allowed to read messages containing commands.
 
