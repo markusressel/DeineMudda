@@ -171,10 +171,10 @@
         },
         "emoji": {
             "hashes": [
-                "sha256:65c54533ea3c78f30d0729288998715f418d7467de89ec258a31c0ce8660a1d1"
+                "sha256:a2986c21e4aba6b9870df40ef487a17be863cb7778dcf1c01e25917b7cd210bb"
             ],
             "index": "pypi",
-            "version": "==1.7.0"
+            "version": "==2.2.0"
         },
         "greenlet": {
             "hashes": [
