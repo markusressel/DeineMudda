@@ -15,7 +15,7 @@
 
 import re
 from random import randint, choice
-from typing import List
+from typing import List, Tuple
 
 from deinemudda.persistence import Chat
 from deinemudda.response.rule import ResponseRule
@@ -110,6 +110,66 @@ class ReflectCounterIntelligenceRule(ResponseRule):
         return f"nee, {hit.group(0)}"
 
 
+class CustomWordAdjectiveRule(ResponseRule):
+    __description__ = "Custom adjective words"
+
+    words = [
+        "geil",
+        "saugeil",
+    ]
+
+    def matches(self, message: str) -> bool:
+        return any(map(lambda x: re.search(rf"(^| ){x}( |$)", message, re.IGNORECASE) is not None, self.words))
+
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
+        contained_words = self._find_matches(message)
+
+        dice = randint(0, 2)
+
+        if dice == 0:
+            user = choice(chat.users)
+            return f"{user.first_name}'s mudda is' {' und '.join(contained_words)}"
+        elif dice == 1:
+            return "wie deine mudda beim kacken"
+        else:
+            return f"deine mudda is' {' und '.join(contained_words)}"
+
+    def _find_matches(self, message) -> List[str]:
+        return list(
+            filter(
+                lambda x: re.search(rf"(^| ){x}( |$)", message, re.IGNORECASE) is not None,
+                self.words
+            )
+        )
+
+
+class CustomWordNounRule(ResponseRule):
+    __description__ = "Custom noun words"
+
+    words = [
+        ("kacknase", "ne"),
+    ]
+
+    def matches(self, message: str) -> bool:
+        return any(map(lambda x: x[0].lower() in message.lower(), self.words))
+
+    def get_response(self, chat: Chat, sender: str, message: str) -> str or None:
+        contained_words = self._find_matches(message)
+
+        suffix = ' und '.join(list(map(lambda x: f"{x[1]} {x[0]}", contained_words)))
+
+        dice = randint(0, 1)
+
+        if dice == 0:
+            user = choice(chat.users)
+            return f"{user.first_name}'s mudda is' {suffix}"
+        else:
+            return f"deine mudda is' {suffix}"
+
+    def _find_matches(self, message) -> List[Tuple[str, str]]:
+        return list(filter(lambda x: x[0].lower() in message.lower(), self.words))
+
+
 class AdjectiveCounterIntelligenceRule(ResponseRule):
     __description__ = "Adjective counter intelligence"
 
@@ -163,6 +223,13 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
         blob = TextBlob(message)
         parsed = blob.parse()
 
+        result = self._extract_adjp(parsed)
+        if result is None:
+            result = []
+
+        return result
+
+    def _extract_adjp(self, parsed):
         result = []
         sentences = parsed.split()
         for sentence in sentences:
@@ -171,4 +238,17 @@ class AdjectiveCounterIntelligenceRule(ResponseRule):
                 if any(map(lambda x: "ADJP" in x, word_tuple[1:])):
                     result.append(word)
 
+        if len(result) <= 0:
+            return None
+        else:
+            return result
+
+    def _extract_np(self, parsed):
+        result = []
+        sentences = parsed.split()
+        for sentence in sentences:
+            for word_tuple in sentence:
+                word = word_tuple[0]
+                if any(map(lambda x: "-NP" in x, word_tuple[1:])):
+                    result.append(word)
         return result

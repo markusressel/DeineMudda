@@ -19,6 +19,32 @@ from tests import TestBase
 
 class AdjectiveCounterIntelligenceRuleTest(TestBase):
 
+    def test_samples(self):
+        rule = AdjectiveCounterIntelligenceRule()
+
+        mapping = {
+            "das ist doch gut geworden": ["doch", "gut"],
+            "das ist doch sehr gut": ["doch", "sehr", "gut"],
+            "der bot ist schlau": ["schlau"],
+            # "markus ist eine kacknase": ["eine", "kacknase"],
+            # "Satisfactory ist saugeil": ["saugeil"],
+            "lol": [],
+        }
+
+        for input, expected_output in mapping.items():
+            output = rule._find_adpj(input)
+            self.assertEqual(expected_output, output)
+
+    def test_multiple_words_1(self):
+        rule = AdjectiveCounterIntelligenceRule()
+
+        response = rule.get_response(self.dummy_chat, None, "das ist doch gut geworden")
+        self.assertIn(response, [
+            "deine mudda is' doch gut",
+            "markus's mudda is' doch gut",
+            "wie deine mudda beim kacken",
+        ])
+
     def test_multiple_words(self):
         rule = AdjectiveCounterIntelligenceRule()
 
