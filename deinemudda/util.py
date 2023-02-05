@@ -16,7 +16,7 @@
 from telegram import Bot, Message
 
 
-def send_message(bot: Bot, chat_id: int, message: str, parse_mode: str = None, reply_to: int = None) -> Message:
+async def send_message(bot: Bot, chat_id: int, message: str, parse_mode: str = None, reply_to: int = None) -> Message:
     """
     Sends a text message to the given chat
     :param bot: the bot
@@ -28,7 +28,8 @@ def send_message(bot: Bot, chat_id: int, message: str, parse_mode: str = None, r
     from emoji import emojize
 
     emojized_text = emojize(message)
-    return bot.send_message(chat_id=chat_id, parse_mode=parse_mode, text=emojized_text, reply_to_message_id=reply_to)
+    return await bot.send_message(chat_id=chat_id, parse_mode=parse_mode, text=emojized_text,
+                                  reply_to_message_id=reply_to)
 
 
 def import_submodules(package, recursive=True) -> dict:
