@@ -19,6 +19,11 @@ from telegram import Bot, Update
 from telegram.ext import MessageHandler, CommandHandler, filters
 from telegram.ext._applicationbuilder import ApplicationBuilder
 from telegram.ext._contexttypes import ContextTypes
+from telegram_click import generate_command_list
+from telegram_click.argument import Argument, Selection
+from telegram_click.decorator import command
+from telegram_click.permission import GROUP_ADMIN, PRIVATE_CHAT, GROUP_CREATOR
+from telegram_click.permission.base import Permission
 
 from deinemudda.antispam import AntiSpam
 from deinemudda.config import AppConfig
@@ -28,27 +33,21 @@ from deinemudda.response import ResponseManager
 from deinemudda.stats import MESSAGE_TIME, MESSAGES_COUNT, format_metrics
 from deinemudda.util import send_message
 
-# from telegram_click import generate_command_list
-# from telegram_click.argument import Argument, Selection
-# from telegram_click.decorator import command
-# from telegram_click.permission import GROUP_ADMIN, PRIVATE_CHAT, GROUP_CREATOR
-# from telegram_click.permission.base import Permission
-
 LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
 
-# class _ConfigAdmins(Permission):
-#
-#     def __init__(self):
-#         self._config = AppConfig()
-#
-#     def evaluate(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
-#         from_user = update.effective_message.from_user
-#         return from_user.username in self._config.TELEGRAM_ADMIN_USERNAMES.value
-#
-#
-# CONFIG_ADMINS = _ConfigAdmins()
+class _ConfigAdmins(Permission):
+
+    def __init__(self):
+        self._config = AppConfig()
+
+    async def evaluate(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+        from_user = update.effective_message.from_user
+        return from_user.username in self._config.TELEGRAM_ADMIN_USERNAMES.value
+
+
+CONFIG_ADMINS = _ConfigAdmins()
 
 
 class DeineMuddaBot:
@@ -60,11 +59,6 @@ class DeineMuddaBot:
         self._response_manager = ResponseManager(self._persistence)
 
         self._app = ApplicationBuilder().token(self._config.TELEGRAM_BOT_TOKEN.value).build()
-
-        # self._updater = Updater(
-        #   token=self._config.TELEGRAM_BOT_TOKEN.value,
-        #   use_context=True
-        # )
 
         handler_groups = {
             0: [MessageHandler(filters=None, callback=self._any_message_callback)],
@@ -230,23 +224,22 @@ class DeineMuddaBot:
                 chat.users = list(filter(lambda x: x.id != member.id, chat.users))
                 self._persistence.add_or_update_chat(chat)
 
-    # @command(
-    #     name=COMMAND_HELP,
-    #     description="List commands supported by this bot.",
-    #     permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_HELP,
+        description="List commands supported by this bot.",
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
     async def _help_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         bot = context.bot
         chat_id = update.effective_message.chat_id
-        text = "help"
-        # text = generate_command_list(update, context)
+        text = await generate_command_list(update, context)
         await send_message(bot, chat_id, text, parse_mode="MARKDOWN")
 
-    # @command(
-    #     name=COMMAND_VERSION,
-    #     description="Show application version.",
-    #     permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_VERSION,
+        description="Show application version.",
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
     async def _version_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         bot = context.bot
         chat_id = update.effective_message.chat_id
@@ -254,11 +247,11 @@ class DeineMuddaBot:
         text = f"Version: `{DEINE_MUDDA_VERSION}`"
         await send_message(bot, chat_id, text, parse_mode="MARKDOWN", reply_to=message_id)
 
-    # @command(
-    #     name=COMMAND_CONFIG,
-    #     description="Show current application configuration.",
-    #     permissions=PRIVATE_CHAT & CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_CONFIG,
+        description="Show current application configuration.",
+        permissions=PRIVATE_CHAT & CONFIG_ADMINS
+    )
     async def _config_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         from container_app_conf.formatter.toml import TomlFormatter
 
@@ -270,11 +263,11 @@ class DeineMuddaBot:
         text = f"```\n{text}\n```"
         await send_message(bot, chat_id, text, parse_mode="MARKDOWN", reply_to=message_id)
 
-    # @command(
-    #     name=COMMAND_STATS,
-    #     description="List bot statistics.",
-    #     permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_STATS,
+        description="List bot statistics.",
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
     async def _stats_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """
         /stats command handler
@@ -289,11 +282,11 @@ class DeineMuddaBot:
 
         await send_message(bot, chat_id, text, reply_to=message_id)
 
-    # @command(
-    #     name=COMMAND_MUDDA,
-    #     description="Trigger the bot manually.",
-    #     permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_MUDDA,
+        description="Trigger the bot manually.",
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
     async def _mudda_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         bot = context.bot
         if self._antispam.process_message(update, context):
@@ -316,11 +309,11 @@ class DeineMuddaBot:
 
         await self._shout(bot, update.message, text, reply=reply)
 
-    # @command(
-    #     name=COMMAND_GET_SETTINGS,
-    #     description="Show settings for the current chat.",
-    #     permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_GET_SETTINGS,
+        description="Show settings for the current chat.",
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
     async def _get_settings_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         bot = context.bot
         chat_id = update.effective_message.chat_id
@@ -339,21 +332,21 @@ class DeineMuddaBot:
             # TODO: would be better if this could display default values to give at least some information
             await send_message(bot, chat_id, "No chat specific settings set", reply_to=message_id)
 
-    # @command(
-    #     name=COMMAND_SET_CHANCE,
-    #     description="Set the trigger probability to a specific value.",
-    #     arguments=[
-    #         Argument(
-    #             name=["probability", "p"],
-    #             example="0.13",
-    #             type=float,
-    #             converter=lambda x: float(x),
-    #             description="The probability to set",
-    #             validator=(lambda x: 0 <= x <= 1)
-    #         )
-    #     ],
-    #     permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_SET_CHANCE,
+        description="Set the trigger probability to a specific value.",
+        arguments=[
+            Argument(
+                name=["probability", "p"],
+                example="0.13",
+                type=float,
+                converter=lambda x: float(x),
+                description="The probability to set",
+                validator=(lambda x: 0 <= x <= 1)
+            )
+        ],
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
     async def _set_chance_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, probability):
         bot = context.bot
         chat_id = update.effective_message.chat_id
@@ -365,18 +358,18 @@ class DeineMuddaBot:
 
         await send_message(bot, chat_id, message=f"TriggerChance: {probability * 100}%", reply_to=message_id)
 
-    # @command(
-    #     name=COMMAND_SET_ANTISPAM,
-    #     description="Turn antispam feature on/off",
-    #     arguments=[
-    #         Selection(
-    #             name=["state", "s"],
-    #             description="The new state",
-    #             allowed_values=["on", "off"]
-    #         )
-    #     ],
-    #     permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_SET_ANTISPAM,
+        description="Turn antispam feature on/off",
+        arguments=[
+            Selection(
+                name=["state", "s"],
+                description="The new state",
+                allowed_values=["on", "off"]
+            )
+        ],
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
     async def _set_antispam_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, new_state: str):
         bot = context.bot
         chat_id = update.effective_message.chat_id
@@ -388,11 +381,11 @@ class DeineMuddaBot:
 
         await send_message(bot, chat_id, message=f"Antispam: {new_state}", reply_to=message_id)
 
-    # @command(
-    #     name=COMMAND_LIST_USERS,
-    #     description="List all known users in this chat",
-    #     permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_LIST_USERS,
+        description="List all known users in this chat",
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
     async def _list_users_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         bot = context.bot
         chat_id = update.effective_message.chat_id
@@ -404,19 +397,19 @@ class DeineMuddaBot:
 
         await send_message(bot, chat_id, message=message, reply_to=message_id)
 
-    # @command(
-    #     name=COMMAND_BAN,
-    #     description="Ban a user",
-    #     arguments=[
-    #         Argument(
-    #             name=["user", "u"],
-    #             description="Username or user id",
-    #             type=str,
-    #             example="123456789",
-    #         )
-    #     ],
-    #     permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_BAN,
+        description="Ban a user",
+        arguments=[
+            Argument(
+                name=["user", "u"],
+                description="Username or user id",
+                type=str,
+                example="123456789",
+            )
+        ],
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
     async def _ban_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: str):
         bot = context.bot
         chat_id = update.effective_message.chat_id
@@ -440,19 +433,19 @@ class DeineMuddaBot:
         await send_message(bot, chat_id, message=f"Banned user: {username} ({user_id})",
                            reply_to=message_id)
 
-    # @command(
-    #     name=COMMAND_UNBAN,
-    #     description="Unban a banned user",
-    #     arguments=[
-    #         Argument(
-    #             name=["user", "u"],
-    #             description="Username or user id",
-    #             type=str,
-    #             example="123456789",
-    #         )
-    #     ],
-    #     permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
-    # )
+    @command(
+        name=COMMAND_UNBAN,
+        description="Unban a banned user",
+        arguments=[
+            Argument(
+                name=["user", "u"],
+                description="Username or user id",
+                type=str,
+                example="123456789",
+            )
+        ],
+        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+    )
     async def _unban_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: str):
         bot = context.bot
         chat_id = update.effective_message.chat_id
