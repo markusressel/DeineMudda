@@ -347,7 +347,8 @@ class DeineMuddaBot:
         ],
         permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
-    async def _set_chance_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, probability):
+    async def _set_chance_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE,
+                                           probability: float):
         bot = context.bot
         chat_id = update.effective_message.chat_id
         message_id = update.effective_message.message_id
@@ -370,16 +371,16 @@ class DeineMuddaBot:
         ],
         permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
-    async def _set_antispam_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, new_state: str):
+    async def _set_antispam_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE, state: str):
         bot = context.bot
         chat_id = update.effective_message.chat_id
         message_id = update.effective_message.message_id
 
         chat = self._persistence.get_chat(chat_id)
-        chat.set_setting(SETTINGS_ANTISPAM_ENABLED_KEY, new_state)
+        chat.set_setting(SETTINGS_ANTISPAM_ENABLED_KEY, state)
         self._persistence.add_or_update_chat(chat)
 
-        await send_message(bot, chat_id, message=f"Antispam: {new_state}", reply_to=message_id)
+        await send_message(bot, chat_id, message=f"Antispam: {state}", reply_to=message_id)
 
     @command(
         name=COMMAND_LIST_USERS,
