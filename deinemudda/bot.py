@@ -22,7 +22,7 @@ from telegram.ext._contexttypes import ContextTypes
 from telegram_click import generate_command_list
 from telegram_click.argument import Argument, Selection
 from telegram_click.decorator import command
-from telegram_click.permission import GROUP_ADMIN, PRIVATE_CHAT, GROUP_CREATOR
+from telegram_click.permission import GROUP_ADMIN, PRIVATE_CHAT, GROUP_CREATOR, GROUP_CHAT
 from telegram_click.permission.base import Permission
 
 from deinemudda.antispam import AntiSpam
@@ -285,7 +285,7 @@ class DeineMuddaBot:
     @command(
         name=COMMAND_MUDDA,
         description="Trigger the bot manually.",
-        permissions=PRIVATE_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
+        permissions=PRIVATE_CHAT | GROUP_CHAT | GROUP_CREATOR | GROUP_ADMIN | CONFIG_ADMINS
     )
     async def _mudda_command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         bot = context.bot
