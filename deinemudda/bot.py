@@ -199,7 +199,8 @@ class DeineMuddaBot:
         chat_id = effective_message.chat_id
         chat_type = update.effective_chat.type
 
-        my_id = bot.get_me().id
+        me = await bot.get_me()
+        my_id = me.id
 
         if effective_message.new_chat_members:
             for member in effective_message.new_chat_members:
