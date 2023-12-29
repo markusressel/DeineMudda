@@ -10,7 +10,7 @@ telegram-click = ">=6"
 textblob = "*"
 textblob-de = "*"
 emoji = "*"
-sqlalchemy = "~=1.4"
+sqlalchemy = "~=2.0"
 alembic = "*"
 prometheus-client = "*"
 # psycopg2-binary
